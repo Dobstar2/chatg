@@ -1,0 +1,33 @@
+{
+  "name": "clipboard-to-scene",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "dist:win": "electron-builder --win"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.example.clipboard2scene",
+    "productName": "Clipboard\u2011to\u2011Scene",
+    "files": [
+      "**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "Clipboard-to-Scene-Setup-${version}.exe"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
