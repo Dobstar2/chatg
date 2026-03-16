@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MeetSpark — Chromebook Google Meet Companion</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>MeetSpark</h1>
+        <p>Make every Google Meet session more fun, organized, and interactive on Chromebook.</p>
+      </header>
+
+      <section class="card connect">
+        <h2>1) Launch your Meet</h2>
+        <div class="row">
+          <input id="meetUrl" type="url" placeholder="Paste a Google Meet link (https://meet.google.com/...)" />
+          <button id="openMeet">Open Meet</button>
+        </div>
+        <small id="urlHelp">Meet opens in a new tab while this companion stays here.</small>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>2) Reaction Board</h2>
+          <p>One-click hype reactions for your group.</p>
+          <div class="reaction-grid" id="reactionGrid"></div>
+          <p class="live" id="reactionFeed">No reactions yet.</p>
+        </article>
+
+        <article class="card">
+          <h2>3) Focus Sprint Timer</h2>
+          <p>Keep meetings tight with short sprints.</p>
+          <div class="timer" id="timerDisplay">10:00</div>
+          <div class="row">
+            <button id="startTimer">Start</button>
+            <button id="pauseTimer">Pause</button>
+            <button id="resetTimer">Reset</button>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>4) Spin-the-Idea Wheel</h2>
+          <p>Pick discussion prompts instantly.</p>
+          <div class="row">
+            <input id="ideaInput" type="text" placeholder="Add a topic or question" />
+            <button id="addIdea">Add</button>
+          </div>
+          <ul id="ideaList"></ul>
+          <button id="spinIdea">Spin</button>
+          <p class="live" id="ideaResult">Add topics and spin.</p>
+        </article>
+      </section>
+
+      <section class="card">
+        <h2>5) Shared Energy Meter</h2>
+        <p>Quick pulse-check after activities.</p>
+        <input id="energy" type="range" min="1" max="10" value="7" />
+        <p class="live">Current energy: <strong id="energyValue">7</strong>/10</p>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
