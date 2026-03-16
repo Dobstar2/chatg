@@ -29,6 +29,7 @@ If your Chromebook has Linux development enabled:
 1. Open the Linux Terminal app.
 2. Put the project files in a folder.
 3. Run:
+## Run locally
 
 ```bash
 python3 -m http.server 4173
@@ -42,6 +43,7 @@ python3 -m http.server 4173
 - Pin both tabs (Meet + MeetSpark) so they’re easy to switch between.
 - Use Split Screen for side-by-side view during classes or clubs.
 - If pop-ups are blocked, allow pop-ups for the MeetSpark site so **Open Meet** works.
+Then open <http://localhost:4173>.
 
 ## Why this helps
 
