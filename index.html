@@ -1,90 +1,19 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#05070b" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="SpatialHands" />
-  <link rel="manifest" href="manifest.webmanifest?v=1.0.0-root" />
-  <title>SpatialHands VR v1.0.0</title>
-  <link rel="stylesheet" href="styles.css?v=1.0.0-root" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#030711" />
+  <meta http-equiv="refresh" content="0; url=./pocket-vr-next/?build=0.1.2" />
+  <link rel="canonical" href="./pocket-vr-next/" />
+  <title>Pocket VR</title>
+  <style>
+    html,body{margin:0;width:100%;height:100%;display:grid;place-items:center;background:#030711;color:#f7f9ff;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+    a{color:#74f6c2;font-weight:800}
+  </style>
 </head>
 <body>
-  <video id="camera" playsinline muted></video>
-
-  <div id="startScreen" class="start-screen">
-    <div class="start-card">
-      <div class="orb">◉</div>
-      <div id="startBuild" class="build-chip">BUILD v1.0.0</div>
-      <h1>SpatialHands VR</h1>
-      <p>Stable world-vector anchoring, a truly fixed visor HUD, rear 0.5× camera preference, and hand tracking with pinch selection.</p>
-      <div class="gesture-demo">
-        <div class="gesture-step"><b>1</b><span>Hold one hand in front of the rear camera</span><span class="finger">✋</span></div>
-        <div class="gesture-step"><b>2</b><span>Your INDEX fingertip controls the green ring</span><span class="finger">☝</span></div>
-        <div class="gesture-step"><b>3</b><span>Touch THUMB + INDEX together to click</span><span class="finger">👌</span></div>
-      </div>
-      <button id="startButton" class="primary">Enter VR</button>
-      <p id="startStatus" class="small">Rotate your iPhone to landscape, face forward, then tap Enter VR.</p>
-      <div id="installHint" class="install-hint">
-        <strong>For no Safari toolbar:</strong> tap Share → Add to Home Screen, then launch SpatialHands from the Home Screen icon.
-      </div>
-    </div>
-  </div>
-
-  <main id="vrRoot" class="vr-root" aria-label="SpatialHands VR stereo interface">
-    <section class="eye" id="leftEye"><div class="world" data-eye="left"></div></section>
-    <div class="divider"></div>
-    <section class="eye" id="rightEye"><div class="world" data-eye="right"></div></section>
-  </main>
-
-  <div class="hud" id="hud">
-    <span id="buildState" class="build-state">BUILD v1.0.0</span>
-    <span id="motionState">HEAD: OFF</span>
-    <span id="lookState">LOOK: CENTER</span>
-    <span id="handState">HAND: OFF</span>
-    <span id="cameraState">CAMERA: OFF</span>
-  </div>
-
-  <button id="recenterButton" class="recenter" aria-label="Recenter view">◎</button>
-
-  <template id="worldTemplate">
-    <div class="sky-glow"></div>
-    <div class="shell">
-      <header class="topbar glass">
-        <div><div class="eyebrow">SPATIALHANDS</div><div class="title">World Menu</div></div>
-        <div class="status-dot"></div>
-      </header>
-      <div class="gesture-status glass">
-        <strong data-gesture-state>SHOW ONE HAND</strong>
-        <span data-target-state>INDEX = POINTER · PINCH = CLICK</span>
-      </div>
-      <div class="hero glass">
-        <div class="hero-orb"></div>
-        <div>
-          <div class="eyebrow">STABLE WORLD ANCHOR</div>
-          <h2>This menu is pinned to a direction in space.</h2>
-          <p>At recenter, SpatialHands stores the forward direction as a 3D world vector. Turning your head changes your view around that fixed vector. The HUD stays fixed to your visor.</p>
-        </div>
-      </div>
-      <div class="app-grid">
-        <button class="app-tile glass" data-action="browser"><span class="icon">◌</span><span>Browser</span><small>Open destinations</small></button>
-        <button class="app-tile glass" data-action="media"><span class="icon">▶</span><span>Media</span><small>Ambient player</small></button>
-        <button class="app-tile glass" data-action="passthrough"><span class="icon">◉</span><span>Passthrough</span><small>Toggle rear 0.5× view</small></button>
-        <button class="app-tile glass" data-action="settings"><span class="icon">⌁</span><span>Hand Direction</span><small>Flip pointer direction</small></button>
-      </div>
-      <div class="dock glass">
-        <button data-action="home" aria-label="Home">⌂</button>
-        <button data-action="recenter" aria-label="Recenter">◎</button>
-        <button data-action="info" aria-label="Info">i</button>
-      </div>
-      <div class="panel glass" data-panel="message"><strong>Ready</strong><span>Point with your index finger and pinch to activate a button. Use ◎ to place the world menu directly ahead.</span></div>
-    </div>
-    <canvas class="hand-layer" aria-hidden="true"></canvas>
-    <div class="cursor" aria-hidden="true"><span></span></div>
-  </template>
-
-  <script type="module" src="boot-v100.js?v=1.0.0-root"></script>
+  <p>Opening Pocket VR Next… <a href="./pocket-vr-next/?build=0.1.2">Tap here if it does not open.</a></p>
+  <script>location.replace('./pocket-vr-next/?build=0.1.2');</script>
 </body>
 </html>
