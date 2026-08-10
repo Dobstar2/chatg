@@ -35,3 +35,9 @@ This folder is an isolated GitHub Pages preview for the tracking-first refactor.
 - Hand Z is estimated from monocular camera scale.
 - The MediaPipe runtime/model are still loaded from their existing browser CDNs and should be vendored before a final offline-ready release.
 - Physical iPhone testing is still required before promoting this preview to the root GitHub Pages build.
+
+## Validation
+
+Run `npm test` from this folder during development. The deployed runtime itself has no Node or server dependency; the page uses only relative static assets plus the existing MediaPipe browser CDN/model URLs.
+
+The preview URL is `https://dobstar2.github.io/chatg/pocket-vr-next/` after GitHub Pages publishes the committed folder.
