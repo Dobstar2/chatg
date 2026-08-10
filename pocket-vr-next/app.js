@@ -5,7 +5,7 @@ import { HandTrackingManager } from './tracking/hand-tracking.js';
 import { InteractionManager } from './scene/interaction-manager.js';
 import { StereoRenderer } from './scene/stereo-renderer.js';
 
-const BUILD = 'tracking-foundation-0.1.2';
+const BUILD = 'tracking-foundation-0.1.3';
 
 class PocketVRApp {
   constructor() {
@@ -293,51 +293,13 @@ class PocketVRApp {
     const viewport = window.visualViewport;
     const width = Math.round(viewport?.width || window.innerWidth || document.documentElement.clientWidth || 1);
     const height = Math.round(viewport?.height || window.innerHeight || document.documentElement.clientHeight || 1);
-    const left = Math.round(viewport?.offsetLeft || 0);
-    const top = Math.round(viewport?.offsetTop || 0);
     const eyeWidth = width / 2;
 
     document.documentElement.style.setProperty('--app-height', `${height}px`);
     document.documentElement.style.setProperty('--app-width', `${width}px`);
 
-    if (this.stereoRoot) {
-      Object.assign(this.stereoRoot.style, {
-        position: 'fixed',
-        left: `${left}px`,
-        top: `${top}px`,
-        width: `${width}px`,
-        height: `${height}px`,
-        display: 'block',
-        overflow: 'hidden',
-      });
-    }
-
-    this.eyes.forEach((eye, index) => {
-      Object.assign(eye.style, {
-        position: 'absolute',
-        top: '0px',
-        left: index === 0 ? '0px' : `${eyeWidth}px`,
-        width: `${eyeWidth}px`,
-        height: `${height}px`,
-        minWidth: '0px',
-        minHeight: '0px',
-        overflow: 'hidden',
-      });
-    });
-
-    if (this.divider) {
-      Object.assign(this.divider.style, {
-        position: 'absolute',
-        left: `${eyeWidth}px`,
-        top: '0px',
-        bottom: 'auto',
-        width: '2px',
-        height: `${height}px`,
-        transform: 'translateX(-1px)',
-      });
-    }
-
-    // Resize both backing canvases after the containers have their final equal dimensions.
+    // CSS owns the actual eye boxes: exactly 50dvw by 100dvh each. We only
+    // trigger backing-buffer resize here after Safari changes its viewport.
     requestAnimationFrame(() => this.renderer.resize());
   }
 
