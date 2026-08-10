@@ -1,0 +1,36 @@
+name: Pocket VR Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pocket-vr-next/**'
+      - 'index.html'
+      - 'manifest.webmanifest'
+      - '.github/workflows/pocket-vr-tests.yml'
+  pull_request:
+    paths:
+      - 'pocket-vr-next/**'
+      - 'index.html'
+      - 'manifest.webmanifest'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: pocket-vr-next
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+      - name: Syntax check tracking modules
+        run: |
+          node --check tracking/filters-v020.js
+          node --check tracking/gesture-detector-v020.js
+          node --check tracking/hand-tracking-v020.js
+          node --check scene/interaction-manager-v020.js
+          node --check app-v020.js
