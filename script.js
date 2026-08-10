@@ -83,24 +83,92 @@ async function enableMotion() {
   }
 }
 
-async function selectBestRearCamera() {
-  // Open once so iOS can expose camera labels, then prefer an ultra-wide/0.5x-like device if the browser exposes one.
-  const initial = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+function cameraScore(device) {
+  const label = (device.label || '').toLowerCase();
+  if (/front|user|facetime|selfie/.test(label)) return -1000;
+
+  let score = 0;
+  if (/ultra[ -]?wide|0\.5|0,5/.test(label)) score += 200;
+  if (/back|rear|environment/.test(label)) score += 100;
+  if (/triple|dual wide|dual/.test(label)) score += 40;
+  if (/wide/.test(label)) score += 15;
+  return score;
+}
+
+function isDefinitelyFrontTrack(track) {
+  const settings = typeof track.getSettings === 'function' ? track.getSettings() : {};
+  const label = (track.label || '').toLowerCase();
+  return settings.facingMode === 'user' || /front|user|facetime|selfie/.test(label);
+}
+
+async function openRearByFacingMode() {
+  return navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: { exact: 'environment' },
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+    },
     audio: false,
   });
+}
+
+async function selectBestRearCamera() {
+  let initial = null;
+
+  // First make a strict rear-facing request. Unlike `ideal`, `exact` must not
+  // intentionally fall back to the selfie camera.
+  try {
+    initial = await openRearByFacingMode();
+  } catch (_) {
+    // Request temporary video permission only so Safari can reveal camera labels.
+    // This temporary stream is never displayed and is rejected if it is front-facing.
+    initial = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+  }
 
   const devices = await navigator.mediaDevices.enumerateDevices();
   const videoDevices = devices.filter((device) => device.kind === 'videoinput');
-  const preferred = videoDevices.find((device) => /ultra|0\.5|triple|back.*wide/i.test(device.label));
+  const rankedRearDevices = videoDevices
+    .map((device) => ({ device, score: cameraScore(device) }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score);
 
-  if (!preferred) return initial;
+  const preferred = rankedRearDevices[0]?.device;
 
-  initial.getTracks().forEach((track) => track.stop());
-  return navigator.mediaDevices.getUserMedia({
-    video: { deviceId: { exact: preferred.deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } },
-    audio: false,
-  });
+  if (preferred) {
+    initial.getTracks().forEach((track) => track.stop());
+    const selected = await navigator.mediaDevices.getUserMedia({
+      video: {
+        deviceId: { exact: preferred.deviceId },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+      audio: false,
+    });
+
+    const selectedTrack = selected.getVideoTracks()[0];
+    if (isDefinitelyFrontTrack(selectedTrack)) {
+      selected.getTracks().forEach((track) => track.stop());
+      throw new Error('Safari selected the front camera instead of a rear camera.');
+    }
+    return selected;
+  }
+
+  const initialTrack = initial.getVideoTracks()[0];
+  if (isDefinitelyFrontTrack(initialTrack)) {
+    initial.getTracks().forEach((track) => track.stop());
+
+    // One final strict environment request. If Safari cannot satisfy it, fail closed:
+    // SpatialHands must never knowingly show the front camera.
+    const rear = await openRearByFacingMode();
+    const rearTrack = rear.getVideoTracks()[0];
+    if (isDefinitelyFrontTrack(rearTrack)) {
+      rear.getTracks().forEach((track) => track.stop());
+      throw new Error('No rear camera was exposed to Safari.');
+    }
+    return rear;
+  }
+
+  return initial;
 }
 
 async function enableCamera() {
@@ -111,28 +179,39 @@ async function enableCamera() {
 
   try {
     stream = await selectBestRearCamera();
+    const track = stream.getVideoTracks()[0];
+
+    if (!track || isDefinitelyFrontTrack(track)) {
+      stream?.getTracks().forEach((item) => item.stop());
+      stream = null;
+      throw new Error('Front camera rejected.');
+    }
+
     camera.srcObject = stream;
     await camera.play();
 
-    const track = stream.getVideoTracks()[0];
     const caps = typeof track.getCapabilities === 'function' ? track.getCapabilities() : {};
     if (caps.zoom && typeof track.applyConstraints === 'function') {
       try {
         await track.applyConstraints({ advanced: [{ zoom: caps.zoom.min }] });
       } catch (_) {
-        // Some iOS/Safari camera tracks expose zoom metadata but reject manual zoom constraints.
+        // Safari may expose zoom metadata while refusing manual zoom changes.
       }
     }
 
     const settings = typeof track.getSettings === 'function' ? track.getSettings() : {};
-    const label = track.label || 'rear camera';
-    cameraState.textContent = `CAMERA: ${/ultra|0\.5/i.test(label) ? '0.5X' : 'REAR'}`;
+    const label = track.label || '';
+    const ultraWide = /ultra[ -]?wide|0\.5|0,5/i.test(label);
+    cameraState.textContent = ultraWide ? 'CAMERA: REAR 0.5X' : 'CAMERA: REAR';
     camera.dataset.width = settings.width || camera.videoWidth;
     camera.dataset.height = settings.height || camera.videoHeight;
     return true;
   } catch (error) {
-    cameraState.textContent = 'CAMERA: BLOCKED';
-    setPanel('Camera unavailable', 'Allow camera access in Safari, then reload the page.');
+    stream?.getTracks().forEach((track) => track.stop());
+    stream = null;
+    camera.srcObject = null;
+    cameraState.textContent = 'CAMERA: REAR REQUIRED';
+    setPanel('Rear camera unavailable', 'The selfie camera has been blocked. Allow camera access in Safari and reload. SpatialHands will only continue with a rear camera.');
     return false;
   }
 }
@@ -297,7 +376,7 @@ async function requestFullscreenAndLandscape() {
 
 async function startVR() {
   startButton.disabled = true;
-  startStatus.textContent = 'Starting motion, camera and hand tracking…';
+  startStatus.textContent = 'Starting motion, rear camera and hand tracking…';
 
   await enableMotion();
   const cameraOkay = await enableCamera();
@@ -305,7 +384,10 @@ async function startVR() {
   await requestFullscreenAndLandscape();
 
   startScreen.classList.add('hidden');
-  setPanel('SpatialHands active', 'Move your head to look, then point and pinch. Use ◎ to recenter.');
+  setPanel(
+    cameraOkay ? 'SpatialHands active' : 'Head tracking active',
+    cameraOkay ? 'Rear camera locked. Move your head, then point and pinch.' : 'Rear camera was not available, so the selfie camera was blocked.'
+  );
 }
 
 startButton.addEventListener('click', startVR);
