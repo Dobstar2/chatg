@@ -1,0 +1,337 @@
+:root {
+  color-scheme: dark;
+  --background: #010308;
+  --panel: #101727;
+  --line: rgba(255,255,255,.15);
+  --text: #f7f9ff;
+  --muted: #a5b1ca;
+  --accent: #74f6c2;
+  --app-height: 100dvh;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--background);
+  color: var(--text);
+  overscroll-behavior: none;
+}
+
+html {
+  position: fixed;
+  inset: 0;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+  width: 100dvw;
+  height: 100dvh;
+  min-height: 100dvh;
+  touch-action: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+#trackingVideo {
+  position: fixed;
+  left: -10000px;
+  top: -10000px;
+  width: 2px;
+  height: 2px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#stereoRoot {
+  position: fixed !important;
+  z-index: 0;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100dvw !important;
+  height: 100dvh !important;
+  min-width: 100dvw !important;
+  min-height: 100dvh !important;
+  display: block !important;
+  background: var(--background);
+  overflow: hidden !important;
+}
+
+#stereoRoot > .eye {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 50% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  overflow: hidden !important;
+}
+
+#stereoRoot > .eye:first-of-type {
+  left: 0 !important;
+  right: auto !important;
+}
+
+#stereoRoot > .eye:last-of-type {
+  left: 50% !important;
+  right: auto !important;
+}
+
+#leftEyeCanvas,
+#rightEyeCanvas,
+.eye canvas {
+  position: absolute !important;
+  inset: 0 !important;
+  left: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  touch-action: none;
+}
+
+.divider {
+  position: fixed !important;
+  z-index: 5;
+  left: 50dvw !important;
+  top: 0 !important;
+  bottom: auto !important;
+  width: 2px !important;
+  height: 100dvh !important;
+  transform: translateX(-1px) !important;
+  background: rgba(255,255,255,.13);
+  pointer-events: none;
+}
+
+.start-overlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  width: 100dvw;
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: radial-gradient(circle at 50% 20%, #121c34 0%, #050811 54%, #010308 100%);
+  touch-action: pan-y;
+}
+
+.start-overlay.hidden {
+  display: none;
+}
+
+.start-card {
+  width: min(680px, 100%);
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: rgba(13,19,32,.95);
+  box-shadow: 0 28px 90px rgba(0,0,0,.45);
+}
+
+.build-label {
+  display: inline-flex;
+  padding: 6px 9px;
+  border: 1px solid rgba(116,246,194,.42);
+  border-radius: 999px;
+  background: rgba(23,66,55,.6);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .07em;
+}
+
+h1 {
+  margin: 12px 0 8px;
+  font-size: clamp(30px, 7vw, 54px);
+  line-height: .96;
+  letter-spacing: -.05em;
+}
+
+.lead {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.requirements,
+.instructions {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.requirements > div {
+  display: grid;
+  grid-template-columns: minmax(130px, .45fr) 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px;
+  background: rgba(255,255,255,.035);
+  font-size: 13px;
+}
+
+.requirements span {
+  color: var(--muted);
+}
+
+.instructions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.instructions span {
+  min-height: 52px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 14px;
+  background: rgba(3,7,16,.55);
+  color: #dce5fb;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.enter-button {
+  width: 100%;
+  margin-top: 18px;
+  padding: 15px 18px;
+  border: 0;
+  border-radius: 17px;
+  background: linear-gradient(135deg, #e8fbff, #9bd2ff 48%, #c5adff);
+  color: #07101e;
+  font-weight: 900;
+  font-size: 16px;
+}
+
+.enter-button:disabled {
+  opacity: .55;
+}
+
+.status,
+.standalone-hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.standalone-hint {
+  padding: 9px 11px;
+  border: 1px solid rgba(255,214,139,.25);
+  border-radius: 13px;
+  background: rgba(89,65,20,.22);
+  color: #ffe9b7;
+}
+
+#touchControls {
+  position: fixed;
+  z-index: 20;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  display: flex;
+  gap: 6px;
+  opacity: .72;
+}
+
+#touchControls button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px;
+  background: rgba(3,7,14,.82);
+  font-size: 9px;
+  font-weight: 850;
+}
+
+body:not(.running) #touchControls {
+  display: none;
+}
+
+@media (orientation: portrait) {
+  .start-card::before {
+    content: "Rotate to landscape before entering Pocket VR";
+    display: block;
+    margin-bottom: 12px;
+    color: #ffd68b;
+    font-weight: 900;
+    text-align: center;
+  }
+
+  #stereoRoot {
+    opacity: .35;
+  }
+}
+
+@media (max-height: 470px) {
+  .start-overlay {
+    place-items: start center;
+  }
+
+  .start-card {
+    padding: 18px;
+  }
+
+  h1 {
+    font-size: 30px;
+  }
+
+  .lead {
+    font-size: 12px;
+  }
+
+  .requirements,
+  .instructions {
+    margin-top: 12px;
+  }
+
+  .requirements > div {
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+
+  .instructions span {
+    min-height: 0;
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+
+  .enter-button {
+    margin-top: 12px;
+    padding: 12px;
+  }
+}
+
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  .standalone-hint {
+    display: none;
+  }
+}
