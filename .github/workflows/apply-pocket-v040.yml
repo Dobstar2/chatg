@@ -1,0 +1,46 @@
+name: Apply Pocket Spatial Runtime 0.4
+
+on:
+  push:
+    paths:
+      - '.pocket-upload/**'
+      - '.github/workflows/apply-pocket-v040.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify and extract release
+        shell: bash
+        run: |
+          cat .pocket-upload/part-* > /tmp/payload.b64
+          base64 --decode /tmp/payload.b64 > /tmp/pocket-v040.tar.gz
+          echo "c6d99a37edf4652962f4f96049e5bc565f3d9c3d950de7b6ce8f06df60f97ae1  /tmp/pocket-v040.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/pocket-v040.tar.gz
+          rm -rf .pocket-upload
+          rm -f .github/workflows/apply-pocket-v040.yml
+
+      - name: Validate release
+        shell: bash
+        run: |
+          cd pocket-vr-next
+          npm test
+          find v040 -maxdepth 1 -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Commit release
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Release Pocket Spatial Runtime 0.4"
+          git push origin HEAD:main
