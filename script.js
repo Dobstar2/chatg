@@ -1,5 +1,5 @@
-const BUILD_ID = 'v0.7.1';
-const BUILD_TIME = '10 Aug 2026 17:22 BST';
+const BUILD_ID = 'v0.8.0';
+const BUILD_TIME = '10 Aug 2026 17:32 BST';
 
 const camera = document.getElementById('camera');
 const startScreen = document.getElementById('startScreen');
@@ -20,6 +20,7 @@ worlds.forEach((world) => world.appendChild(worldTemplate.content.cloneNode(true
 
 const shells = worlds.map((world) => world.querySelector('.shell'));
 const cursors = worlds.map((world) => world.querySelector('.cursor'));
+const handCanvases = worlds.map((world) => world.querySelector('.hand-layer'));
 const gestureStates = worlds.map((world) => world.querySelector('[data-gesture-state]'));
 const targetStates = worlds.map((world) => world.querySelector('[data-target-state]'));
 
@@ -37,44 +38,49 @@ const RAD = 180 / Math.PI;
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 const expSmoothing = (dtMs, timeConstantMs) => 1 - Math.exp(-dtMs / timeConstantMs);
 
+const HAND_CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20],
+  [0,17]
+];
+const PALM = [0,1,5,9,13,17];
+
 let baselineQuat = null;
 let currentQuat = null;
 let targetPose = { yaw: 0, pitch: 0, roll: 0 };
 let smoothPose = { yaw: 0, pitch: 0, roll: 0 };
-let gyroRate = { yaw: 0, pitch: 0, roll: 0 };
-let gyroAvailable = false;
 let motionEnabled = false;
 let lastFrameAt = 0;
 let renderLoopActive = true;
 
 let stream = null;
-let handWorker = null;
-let handWorkerReady = false;
-let handFrameInFlight = false;
+let handLandmarker = null;
 let handTrackingActive = false;
-let lastHandSubmitAt = 0;
-let handFrameIntervalMs = 45;
-let videoFrameHandle = null;
+let handTimer = null;
+let lastVideoTime = -1;
+let lastHandSeenAt = 0;
+let handIntervalMs = 78;
+
+let targetHand = null;
+let smoothHand = null;
+let handVisible = false;
+let handOpacity = 0;
 
 let targetPointer = { x: 0.5, y: 0.5 };
 let smoothPointer = { x: 0.5, y: 0.5 };
 let pointerVelocity = { x: 0, y: 0 };
 let lastPointerSampleAt = 0;
-let handVisible = false;
 let pinchDown = false;
 let wasPinching = false;
-let mirrorHand = true;
+let mirrorHand = false;
 let passthrough = false;
-let lastSelectionAt = 0;
 let hoveredAction = null;
-let cursorSizes = shells.map(() => ({ width: 1, height: 1 }));
-
-function updateCursorSizes() {
-  cursorSizes = shells.map((shell) => ({
-    width: Math.max(1, shell?.clientWidth || 1),
-    height: Math.max(1, shell?.clientHeight || 1),
-  }));
-}
+let lastSelectionAt = 0;
+let lastHitTestAt = 0;
+let overlaySizes = worlds.map(() => ({ width: 1, height: 1, dpr: 1 }));
 
 function setPanel(title, message) {
   worlds.forEach((world) => {
@@ -84,12 +90,8 @@ function setPanel(title, message) {
 }
 
 function setGestureGuide(state, target = '') {
-  gestureStates.forEach((node) => {
-    if (node) node.textContent = state;
-  });
-  targetStates.forEach((node) => {
-    if (node) node.textContent = target;
-  });
+  gestureStates.forEach((node) => { if (node) node.textContent = state; });
+  targetStates.forEach((node) => { if (node) node.textContent = target; });
 }
 
 function qNormalize(q) {
@@ -99,10 +101,10 @@ function qNormalize(q) {
 
 function qMultiply(a, b) {
   return {
-    x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
-    y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
-    z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w,
-    w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
+    x: a.w*b.x + a.x*b.w + a.y*b.z - a.z*b.y,
+    y: a.w*b.y - a.x*b.z + a.y*b.w + a.z*b.x,
+    z: a.w*b.z + a.x*b.y - a.y*b.x + a.z*b.w,
+    w: a.w*b.w - a.x*b.x - a.y*b.y - a.z*b.z,
   };
 }
 
@@ -113,24 +115,24 @@ function qConjugate(q) {
 function qAxisAngle(x, y, z, angle) {
   const half = angle * 0.5;
   const s = Math.sin(half);
-  return { x: x * s, y: y * s, z: z * s, w: Math.cos(half) };
+  return { x: x*s, y: y*s, z: z*s, w: Math.cos(half) };
 }
 
 function qFromEulerYXZ(x, y, z) {
-  const c1 = Math.cos(x / 2), c2 = Math.cos(y / 2), c3 = Math.cos(z / 2);
-  const s1 = Math.sin(x / 2), s2 = Math.sin(y / 2), s3 = Math.sin(z / 2);
+  const c1 = Math.cos(x/2), c2 = Math.cos(y/2), c3 = Math.cos(z/2);
+  const s1 = Math.sin(x/2), s2 = Math.sin(y/2), s3 = Math.sin(z/2);
   return {
-    x: s1 * c2 * c3 + c1 * s2 * s3,
-    y: c1 * s2 * c3 - s1 * c2 * s3,
-    z: c1 * c2 * s3 - s1 * s2 * c3,
-    w: c1 * c2 * c3 + s1 * s2 * s3,
+    x: s1*c2*c3 + c1*s2*s3,
+    y: c1*s2*c3 - s1*c2*s3,
+    z: c1*c2*s3 - s1*s2*c3,
+    w: c1*c2*c3 + s1*s2*s3,
   };
 }
 
 function qRotateVector(q, v) {
   const qv = { x: v.x, y: v.y, z: v.z, w: 0 };
-  const result = qMultiply(qMultiply(q, qv), qConjugate(q));
-  return { x: result.x, y: result.y, z: result.z };
+  const r = qMultiply(qMultiply(q, qv), qConjugate(q));
+  return { x: r.x, y: r.y, z: r.z };
 }
 
 function screenAngleDegrees() {
@@ -151,23 +153,12 @@ function relativePose(base, current) {
   const relative = qNormalize(qMultiply(qConjugate(base), current));
   const forward = qRotateVector(relative, { x: 0, y: 0, z: -1 });
   const up = qRotateVector(relative, { x: 0, y: 1, z: 0 });
+
   return {
-    yaw: clamp(Math.atan2(forward.x, -forward.z) * RAD, -48, 48),
-    pitch: clamp(Math.asin(clamp(forward.y, -1, 1)) * RAD, -36, 36),
-    roll: clamp(Math.atan2(up.x, up.y) * RAD, -24, 24),
+    yaw: clamp(Math.atan2(-forward.x, -forward.z) * RAD, -50, 50),
+    pitch: clamp(Math.asin(clamp(forward.y, -1, 1)) * RAD, -38, 38),
+    roll: clamp(Math.atan2(up.x, up.y) * RAD, -26, 26),
   };
-}
-
-function remapGyro(rotationRate) {
-  const alpha = Number.isFinite(rotationRate?.alpha) ? rotationRate.alpha : 0;
-  const beta = Number.isFinite(rotationRate?.beta) ? rotationRate.beta : 0;
-  const gamma = Number.isFinite(rotationRate?.gamma) ? rotationRate.gamma : 0;
-  const angle = screenAngleDegrees();
-
-  if (angle === 90) return { yaw: -beta, pitch: gamma, roll: alpha };
-  if (angle === 270) return { yaw: beta, pitch: -gamma, roll: alpha };
-  if (angle === 180) return { yaw: -gamma, pitch: -beta, roll: alpha };
-  return { yaw: gamma, pitch: beta, roll: alpha };
 }
 
 function recenter() {
@@ -181,108 +172,37 @@ function onOrientation(event) {
   const alpha = Number.isFinite(event.alpha) ? event.alpha : 0;
   const beta = Number.isFinite(event.beta) ? event.beta : 0;
   const gamma = Number.isFinite(event.gamma) ? event.gamma : 0;
+
   currentQuat = deviceQuaternion(alpha, beta, gamma);
   if (!baselineQuat) baselineQuat = { ...currentQuat };
 
   const pose = relativePose(baselineQuat, currentQuat);
-  targetPose.yaw = Math.abs(pose.yaw) < 0.08 ? 0 : pose.yaw;
-  targetPose.pitch = Math.abs(pose.pitch) < 0.08 ? 0 : pose.pitch;
-  targetPose.roll = Math.abs(pose.roll) < 0.12 ? 0 : pose.roll;
+  targetPose.yaw = Math.abs(pose.yaw) < 0.12 ? 0 : pose.yaw;
+  targetPose.pitch = Math.abs(pose.pitch) < 0.12 ? 0 : pose.pitch;
+  targetPose.roll = Math.abs(pose.roll) < 0.18 ? 0 : pose.roll;
 
   if (!motionEnabled) {
     motionEnabled = true;
-    motionState.textContent = gyroAvailable ? 'HEAD: GYRO' : 'HEAD: ON';
+    motionState.textContent = 'HEAD: LIVE';
   }
-}
-
-function onMotion(event) {
-  const mapped = remapGyro(event.rotationRate);
-  const a = 0.48;
-  gyroRate.yaw += (mapped.yaw - gyroRate.yaw) * a;
-  gyroRate.pitch += (mapped.pitch - gyroRate.pitch) * a;
-  gyroRate.roll += (mapped.roll - gyroRate.roll) * a;
-
-  if (!gyroAvailable && (Math.abs(mapped.yaw) + Math.abs(mapped.pitch) + Math.abs(mapped.roll) > 0.01)) {
-    gyroAvailable = true;
-    motionState.textContent = 'HEAD: GYRO';
-  }
-}
-
-function renderFrame(now) {
-  if (!renderLoopActive) return;
-  const dt = clamp(lastFrameAt ? now - lastFrameAt : 16.7, 7, 40);
-  lastFrameAt = now;
-
-  const gyroSpeed = Math.hypot(gyroRate.yaw, gyroRate.pitch, gyroRate.roll);
-  const predictionSeconds = gyroAvailable ? 0.026 : 0;
-  const predicted = {
-    yaw: clamp(targetPose.yaw + gyroRate.yaw * predictionSeconds, -50, 50),
-    pitch: clamp(targetPose.pitch + gyroRate.pitch * predictionSeconds, -38, 38),
-    roll: clamp(targetPose.roll + gyroRate.roll * predictionSeconds, -26, 26),
-  };
-
-  const headTimeConstant = gyroSpeed > 70 ? 10 : gyroSpeed > 20 ? 16 : 28;
-  const h = expSmoothing(dt, headTimeConstant);
-  smoothPose.yaw += (predicted.yaw - smoothPose.yaw) * h;
-  smoothPose.pitch += (predicted.pitch - smoothPose.pitch) * h;
-  smoothPose.roll += (predicted.roll - smoothPose.roll) * h;
-
-  shells.forEach((shell, index) => {
-    if (!shell) return;
-    const eyeOffset = index === 0 ? 4 : -4;
-    const tx = (-smoothPose.yaw * 2.7) + eyeOffset;
-    const ty = smoothPose.pitch * 1.8;
-    shell.style.transform = `translate3d(calc(-50% + ${tx.toFixed(2)}px), calc(-50% + ${ty.toFixed(2)}px), 0) rotateZ(${(smoothPose.roll * -0.065).toFixed(2)}deg) rotateY(${(smoothPose.yaw * 0.14).toFixed(2)}deg) rotateX(${(smoothPose.pitch * -0.10).toFixed(2)}deg)`;
-  });
-
-  if (lookState) {
-    const horizontal = smoothPose.yaw > 1 ? 'RIGHT' : smoothPose.yaw < -1 ? 'LEFT' : 'CENTER';
-    const vertical = smoothPose.pitch > 1 ? 'UP' : smoothPose.pitch < -1 ? 'DOWN' : '';
-    lookState.textContent = `LOOK: ${horizontal}${vertical ? ` + ${vertical}` : ''}`;
-  }
-
-  const handAge = lastPointerSampleAt ? Math.min(now - lastPointerSampleAt, 70) : 0;
-  const predictedPointer = {
-    x: clamp(targetPointer.x + pointerVelocity.x * handAge, 0.03, 0.97),
-    y: clamp(targetPointer.y + pointerVelocity.y * handAge, 0.04, 0.96),
-  };
-  const pointerSpeed = Math.hypot(pointerVelocity.x, pointerVelocity.y) * 1000;
-  const p = expSmoothing(dt, pointerSpeed > 0.8 ? 18 : 34);
-  smoothPointer.x += (predictedPointer.x - smoothPointer.x) * p;
-  smoothPointer.y += (predictedPointer.y - smoothPointer.y) * p;
-
-  cursors.forEach((cursor, index) => {
-    if (!cursor) return;
-    const size = cursorSizes[index] || cursorSizes[0];
-    const px = smoothPointer.x * size.width;
-    const py = smoothPointer.y * size.height;
-    cursor.style.transform = `translate3d(${px.toFixed(2)}px, ${py.toFixed(2)}px, 0) translate(-50%, -50%)`;
-    cursor.style.opacity = handVisible ? '1' : '0.2';
-    cursor.classList.toggle('pinching', pinchDown);
-    cursor.classList.toggle('targeted', Boolean(hoveredAction));
-  });
-
-  requestAnimationFrame(renderFrame);
 }
 
 async function enableMotion() {
   try {
-    const permissionRequests = [];
-
+    const requests = [];
     if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-      permissionRequests.push(DeviceMotionEvent.requestPermission());
+      requests.push(DeviceMotionEvent.requestPermission());
     }
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-      permissionRequests.push(DeviceOrientationEvent.requestPermission());
+      requests.push(DeviceOrientationEvent.requestPermission());
     }
 
-    const results = await Promise.all(permissionRequests);
-    if (results.some((permission) => permission !== 'granted')) {
+    const results = await Promise.all(requests);
+    if (results.some((result) => result !== 'granted')) {
       throw new Error('Motion and orientation permission are required.');
     }
 
     window.addEventListener('deviceorientation', onOrientation, { capture: true, passive: true });
-    window.addEventListener('devicemotion', onMotion, { capture: true, passive: true });
     motionState.textContent = 'HEAD: READY';
   } catch (error) {
     motionState.textContent = 'HEAD: BLOCKED';
@@ -307,15 +227,16 @@ function isDefinitelyFrontTrack(track) {
   return settings.facingMode === 'user' || /front|user|facetime|selfie/.test(label);
 }
 
-const rearConstraints = {
-  facingMode: { exact: 'environment' },
-  width: { ideal: 640, max: 960 },
-  height: { ideal: 360, max: 540 },
-  frameRate: { ideal: 30, max: 30 },
-};
-
 async function openRearByFacingMode() {
-  return navigator.mediaDevices.getUserMedia({ video: rearConstraints, audio: false });
+  return navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: { exact: 'environment' },
+      width: { ideal: 480, max: 640 },
+      height: { ideal: 270, max: 480 },
+      frameRate: { ideal: 30, max: 30 },
+    },
+    audio: false,
+  });
 }
 
 async function selectBestRearCamera() {
@@ -338,8 +259,8 @@ async function selectBestRearCamera() {
     const selected = await navigator.mediaDevices.getUserMedia({
       video: {
         deviceId: { exact: preferred.deviceId },
-        width: { ideal: 640, max: 960 },
-        height: { ideal: 360, max: 540 },
+        width: { ideal: 480, max: 640 },
+        height: { ideal: 270, max: 480 },
         frameRate: { ideal: 30, max: 30 },
       },
       audio: false,
@@ -351,15 +272,9 @@ async function selectBestRearCamera() {
     return selected;
   }
 
-  const initialTrack = initial.getVideoTracks()[0];
-  if (isDefinitelyFrontTrack(initialTrack)) {
+  if (isDefinitelyFrontTrack(initial.getVideoTracks()[0])) {
     initial.getTracks().forEach((track) => track.stop());
-    const rear = await openRearByFacingMode();
-    if (isDefinitelyFrontTrack(rear.getVideoTracks()[0])) {
-      rear.getTracks().forEach((track) => track.stop());
-      throw new Error('No rear camera exposed to Safari.');
-    }
-    return rear;
+    return openRearByFacingMode();
   }
   return initial;
 }
@@ -373,7 +288,7 @@ async function enableCamera() {
   try {
     stream = await selectBestRearCamera();
     const track = stream.getVideoTracks()[0];
-    if (!track || isDefinitelyFrontTrack(track)) throw new Error('Front camera rejected.');
+    if (!track || isDefinitelyFrontTrack(track)) throw new Error('Rear camera required.');
 
     camera.srcObject = stream;
     await camera.play();
@@ -391,8 +306,50 @@ async function enableCamera() {
     stream = null;
     camera.srcObject = null;
     cameraState.textContent = 'CAMERA: REAR REQUIRED';
-    setPanel('Rear camera unavailable', 'The selfie camera is blocked. SpatialHands only uses a rear camera.');
+    setPanel('Rear camera unavailable', 'SpatialHands only uses a rear camera.');
     return false;
+  }
+}
+
+async function createLandmarker(vision, fileset, useGpu) {
+  return vision.HandLandmarker.createFromOptions(fileset, {
+    baseOptions: {
+      modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+      ...(useGpu ? { delegate: 'GPU' } : {}),
+    },
+    runningMode: 'VIDEO',
+    numHands: 1,
+    minHandDetectionConfidence: 0.38,
+    minHandPresenceConfidence: 0.38,
+    minTrackingConfidence: 0.38,
+  });
+}
+
+async function enableHandTracking() {
+  if (!stream) return;
+
+  try {
+    handState.textContent = 'HAND: LOADING';
+    const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm');
+    const fileset = await vision.FilesetResolver.forVisionTasks(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+    );
+
+    try {
+      handLandmarker = await createLandmarker(vision, fileset, true);
+      handState.textContent = 'HAND: GPU';
+    } catch (_) {
+      handLandmarker = await createLandmarker(vision, fileset, false);
+      handState.textContent = 'HAND: CPU';
+    }
+
+    handTrackingActive = true;
+    setGestureGuide('SHOW ONE HAND', 'INDEX = POINTER · PINCH = CLICK');
+    scheduleHandFrame(50);
+  } catch (error) {
+    handState.textContent = 'HAND: ERROR';
+    setGestureGuide('HAND TRACKER FAILED', 'Reload and allow camera access');
+    setPanel('Hand tracking error', error?.message || 'The hand model could not start.');
   }
 }
 
@@ -400,18 +357,174 @@ function distance(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function buttonUnderCursor() {
-  const cursor = cursors[0];
-  if (!cursor || !handVisible) return null;
-  const rect = cursor.getBoundingClientRect();
+function mapHandX(x) {
+  const mapped = mirrorHand ? 1 - x : x;
+  return clamp(0.5 + (mapped - 0.5) * 1.35, 0.02, 0.98);
+}
+
+function mapHandY(y) {
+  return clamp(0.5 + (y - 0.5) * 1.3, 0.02, 0.98);
+}
+
+function updatePointerFromLandmarks(landmarks, now) {
+  const indexTip = landmarks[8];
+  const next = { x: mapHandX(indexTip.x), y: mapHandY(indexTip.y) };
+
+  if (lastPointerSampleAt) {
+    const dt = Math.max(16, now - lastPointerSampleAt);
+    pointerVelocity.x = (next.x - targetPointer.x) / dt;
+    pointerVelocity.y = (next.y - targetPointer.y) / dt;
+  }
+
+  targetPointer = next;
+  lastPointerSampleAt = now;
+}
+
+function processDetectedHand(landmarks, now) {
+  targetHand = landmarks.map((point) => ({ x: point.x, y: point.y }));
+  if (!smoothHand) smoothHand = targetHand.map((point) => ({ ...point }));
+
+  updatePointerFromLandmarks(landmarks, now);
+  lastHandSeenAt = now;
+  handVisible = true;
+
+  const wrist = landmarks[0];
+  const thumbTip = landmarks[4];
+  const indexTip = landmarks[8];
+  const middleMcp = landmarks[9];
+  const palmScale = Math.max(distance(wrist, middleMcp), 0.025);
+  const pinchRatio = distance(thumbTip, indexTip) / palmScale;
+  const nextPinch = pinchDown ? pinchRatio < 0.58 : pinchRatio < 0.36;
+
+  pinchDown = nextPinch;
+  handState.textContent = nextPinch ? 'HAND: PINCH' : 'HAND: LIVE';
+
+  if (nextPinch && !wasPinching && hoveredAction) {
+    triggerAction(hoveredAction);
+  }
+  wasPinching = nextPinch;
+}
+
+function scheduleHandFrame(delay = handIntervalMs) {
+  clearTimeout(handTimer);
+  if (handTrackingActive) handTimer = setTimeout(processHandFrame, delay);
+}
+
+function processHandFrame() {
+  if (!handTrackingActive || !handLandmarker) return;
+
+  if (document.hidden || camera.readyState < 2) {
+    scheduleHandFrame(130);
+    return;
+  }
+
+  if (camera.currentTime === lastVideoTime) {
+    scheduleHandFrame(28);
+    return;
+  }
+  lastVideoTime = camera.currentTime;
+
+  const started = performance.now();
+  try {
+    const result = handLandmarker.detectForVideo(camera, started);
+    const landmarks = result.landmarks?.[0];
+
+    if (landmarks) {
+      processDetectedHand(landmarks, started);
+    } else if (started - lastHandSeenAt > 220) {
+      handVisible = false;
+      pinchDown = false;
+      wasPinching = false;
+      handState.textContent = 'HAND: SEARCH';
+      setGestureGuide('SHOW ONE HAND', 'INDEX = POINTER · PINCH = CLICK');
+    }
+  } catch (_) {
+    handState.textContent = 'HAND: RETRY';
+  }
+
+  const workMs = performance.now() - started;
+  handIntervalMs = clamp(Math.round(workMs * 1.7 + 38), 62, 120);
+  scheduleHandFrame(handIntervalMs);
+}
+
+function resizeOverlays() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  overlaySizes = handCanvases.map((canvas, index) => {
+    const world = worlds[index];
+    const width = Math.max(1, world.clientWidth);
+    const height = Math.max(1, world.clientHeight);
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    return { width, height, dpr };
+  });
+}
+
+function handPoint(point, size) {
+  const x = mapHandX(point.x) * size.width;
+  const y = mapHandY(point.y) * size.height;
+  return { x, y };
+}
+
+function drawHand(canvas, size, alpha) {
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(size.dpr, 0, 0, size.dpr, 0, 0);
+  ctx.clearRect(0, 0, size.width, size.height);
+  if (!smoothHand || alpha < 0.02) return;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const palmPoints = PALM.map((index) => handPoint(smoothHand[index], size));
+  ctx.beginPath();
+  palmPoints.forEach((p, index) => index === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(116, 246, 194, 0.16)';
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(116, 246, 194, 0.78)';
+  ctx.lineWidth = 7;
+  HAND_CONNECTIONS.forEach(([a, b]) => {
+    const p1 = handPoint(smoothHand[a], size);
+    const p2 = handPoint(smoothHand[b], size);
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+  });
+
+  ctx.fillStyle = 'rgba(230, 255, 247, 0.92)';
+  smoothHand.forEach((point, index) => {
+    const p = handPoint(point, size);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, index === 8 ? 5.5 : 3.2, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  const tip = handPoint(smoothHand[8], size);
+  ctx.strokeStyle = 'rgba(255,255,255,.95)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(tip.x, tip.y, 10, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function buttonUnderLeftCursor() {
+  if (!handVisible || !cursors[0]) return null;
+  const rect = cursors[0].getBoundingClientRect();
   const x = rect.left + rect.width / 2;
   const y = rect.top + rect.height / 2;
   const element = document.elementFromPoint(x, y);
   return element?.closest?.('button[data-action]') || null;
 }
 
-function refreshInteractionTarget() {
-  const target = buttonUnderCursor();
+function updateInteraction(now) {
+  if (now - lastHitTestAt < 32) return;
+  lastHitTestAt = now;
+
+  const target = buttonUnderLeftCursor();
   const nextAction = target?.dataset.action || null;
 
   if (nextAction !== hoveredAction) {
@@ -424,32 +537,31 @@ function refreshInteractionTarget() {
   }
 
   if (!handVisible) {
-    setGestureGuide('SHOW HAND TO REAR CAMERA', 'Index finger moves the ring');
+    setGestureGuide('SHOW ONE HAND', 'INDEX = POINTER · PINCH = CLICK');
   } else if (pinchDown) {
-    setGestureGuide('✓ PINCH DETECTED', target ? `Selecting ${target.textContent.trim()}` : 'Move onto a tile');
+    setGestureGuide('✓ PINCH DETECTED', target ? `CLICK ${target.textContent.trim()}` : 'Move ring onto a tile');
   } else if (target) {
-    setGestureGuide('👌 PINCH TO SELECT', target.textContent.trim());
+    setGestureGuide('👌 PINCH TO CLICK', target.textContent.trim());
   } else {
-    setGestureGuide('☝ POINT WITH INDEX', 'Move the ring onto a tile');
+    setGestureGuide('☝ INDEX CONTROLS RING', 'Move green ring onto a tile');
   }
-  return target;
 }
 
 function triggerAction(action) {
   const now = performance.now();
-  if (now - lastSelectionAt < 300) return;
+  if (now - lastSelectionAt < 350) return;
   lastSelectionAt = now;
-  if (navigator.vibrate) navigator.vibrate(12);
+  if (navigator.vibrate) navigator.vibrate(18);
 
   switch (action) {
     case 'passthrough':
       passthrough = !passthrough;
       document.body.classList.toggle('passthrough', passthrough);
-      setPanel('Passthrough', passthrough ? 'Rear-camera view enabled.' : 'Virtual background restored.');
+      setPanel('Passthrough', passthrough ? 'Rear camera view enabled.' : 'Virtual background restored.');
       break;
     case 'settings':
       mirrorHand = !mirrorHand;
-      setPanel('Tracking', `Finger movement is now ${mirrorHand ? 'mirrored' : 'direct'}.`);
+      setPanel('Hand direction', mirrorHand ? 'Pointer direction flipped.' : 'Pointer direction set to camera direction.');
       break;
     case 'recenter':
       recenter();
@@ -461,131 +573,73 @@ function triggerAction(action) {
       setPanel('Media', 'Media surface selected.');
       break;
     case 'info':
-      setPanel('SpatialHands VR', `Build ${BUILD_ID}. Gyro prediction is active when HEAD: GYRO is shown.`);
+      setPanel('SpatialHands VR', `Build ${BUILD_ID}. Green ring = index fingertip. Thumb + index pinch = click.`);
       break;
     case 'home':
     default:
-      setPanel('Home', 'Point with your index finger. Touch thumb + index together to click.');
+      setPanel('Home', 'Use your index fingertip to move the green ring. Pinch thumb + index to click.');
       break;
   }
 }
 
-function applyWorkerHand(hand, receivedAt) {
-  if (!hand) {
-    handVisible = false;
-    pinchDown = false;
-    wasPinching = false;
-    pointerVelocity = { x: 0, y: 0 };
-    handState.textContent = 'HAND: SEARCH';
-    refreshInteractionTarget();
-    return;
-  }
+function renderFrame(now) {
+  if (!renderLoopActive) return;
+  const dt = clamp(lastFrameAt ? now - lastFrameAt : 16.7, 7, 40);
+  lastFrameAt = now;
 
-  const palmScale = Math.max(distance(hand.wrist, hand.middleMcp), 0.025);
-  const pinchRatio = distance(hand.thumbTip, hand.indexTip) / palmScale;
-  const nextPinch = pinchDown ? pinchRatio < 0.58 : pinchRatio < 0.36;
-  const nextX = clamp(mirrorHand ? 1 - hand.indexTip.x : hand.indexTip.x, 0.03, 0.97);
-  const nextY = clamp(hand.indexTip.y, 0.04, 0.96);
+  if (motionEnabled && baselineQuat) {
+    const h = expSmoothing(dt, 20);
+    smoothPose.yaw += (targetPose.yaw - smoothPose.yaw) * h;
+    smoothPose.pitch += (targetPose.pitch - smoothPose.pitch) * h;
+    smoothPose.roll += (targetPose.roll - smoothPose.roll) * h;
 
-  if (lastPointerSampleAt) {
-    const sampleDt = Math.max(12, receivedAt - lastPointerSampleAt);
-    const measuredVX = clamp((nextX - targetPointer.x) / sampleDt, -0.0035, 0.0035);
-    const measuredVY = clamp((nextY - targetPointer.y) / sampleDt, -0.0035, 0.0035);
-    pointerVelocity.x = pointerVelocity.x * 0.52 + measuredVX * 0.48;
-    pointerVelocity.y = pointerVelocity.y * 0.52 + measuredVY * 0.48;
-  }
+    shells.forEach((shell, index) => {
+      const eyeOffset = index === 0 ? 4 : -4;
+      const tx = (-smoothPose.yaw * 3.25) + eyeOffset;
+      const ty = smoothPose.pitch * 2.1;
+      shell.style.transform = `translate3d(calc(-50% + ${tx.toFixed(2)}px), calc(-50% + ${ty.toFixed(2)}px), 0) rotateZ(${(-smoothPose.roll * 0.08).toFixed(2)}deg) rotateY(${(smoothPose.yaw * 0.16).toFixed(2)}deg) rotateX(${(-smoothPose.pitch * 0.11).toFixed(2)}deg)`;
+    });
 
-  targetPointer.x = nextX;
-  targetPointer.y = nextY;
-  lastPointerSampleAt = receivedAt;
-  handVisible = true;
-  pinchDown = nextPinch;
-  handState.textContent = nextPinch ? 'HAND: PINCH' : 'HAND: LIVE';
-
-  const target = refreshInteractionTarget();
-  if (nextPinch && !wasPinching && target) triggerAction(target.dataset.action);
-  wasPinching = nextPinch;
-}
-
-function initializeHandWorker() {
-  if (!window.Worker || !window.createImageBitmap) return false;
-
-  try {
-    handWorker = new Worker(new URL('hand-worker.js', import.meta.url), { type: 'module' });
-    handWorker.onmessage = (event) => {
-      const data = event.data || {};
-      if (data.type === 'ready') {
-        handWorkerReady = true;
-        handState.textContent = 'HAND: READY';
-        setGestureGuide('SHOW YOUR INDEX FINGER', 'Then pinch thumb + index to click');
-        return;
-      }
-      if (data.type === 'error') {
-        handWorkerReady = false;
-        handState.textContent = 'HAND: WORKER ERR';
-        return;
-      }
-      if (data.type === 'frame') {
-        handFrameInFlight = false;
-        if (Number.isFinite(data.inferenceMs)) {
-          handFrameIntervalMs = clamp(Math.round(data.inferenceMs * 1.15), 38, 95);
-        }
-        applyWorkerHand(data.hand, performance.now());
-      }
-    };
-    handWorker.onerror = () => {
-      handWorkerReady = false;
-      handFrameInFlight = false;
-      handState.textContent = 'HAND: WORKER ERR';
-    };
-    handWorker.postMessage({ type: 'init' });
-    return true;
-  } catch (_) {
-    handWorker = null;
-    return false;
-  }
-}
-
-async function submitHandFrame(now) {
-  if (!handTrackingActive || !handWorkerReady || handFrameInFlight || document.hidden || camera.readyState < 2) return;
-  if (now - lastHandSubmitAt < handFrameIntervalMs) return;
-
-  handFrameInFlight = true;
-  lastHandSubmitAt = now;
-  try {
-    let bitmap;
-    try {
-      bitmap = await createImageBitmap(camera, { resizeWidth: 320, resizeHeight: 180, resizeQuality: 'low' });
-    } catch (_) {
-      bitmap = await createImageBitmap(camera);
+    if (lookState) {
+      const horizontal = smoothPose.yaw > 1 ? 'RIGHT' : smoothPose.yaw < -1 ? 'LEFT' : 'CENTER';
+      const vertical = smoothPose.pitch > 1 ? 'UP' : smoothPose.pitch < -1 ? 'DOWN' : '';
+      lookState.textContent = `LOOK: ${horizontal}${vertical ? ` + ${vertical}` : ''}`;
     }
-    handWorker.postMessage({ type: 'frame', bitmap, timestamp: performance.now() }, [bitmap]);
-  } catch (_) {
-    handFrameInFlight = false;
   }
-}
 
-function videoFramePump(now) {
-  if (!handTrackingActive) return;
-  submitHandFrame(now);
-  if (typeof camera.requestVideoFrameCallback === 'function') {
-    videoFrameHandle = camera.requestVideoFrameCallback(videoFramePump);
-  } else {
-    setTimeout(() => videoFramePump(performance.now()), 34);
+  if (targetHand && smoothHand) {
+    const a = expSmoothing(dt, 46);
+    for (let i = 0; i < smoothHand.length; i += 1) {
+      smoothHand[i].x += (targetHand[i].x - smoothHand[i].x) * a;
+      smoothHand[i].y += (targetHand[i].y - smoothHand[i].y) * a;
+    }
   }
-}
 
-async function enableHandTracking() {
-  if (!stream) return;
-  handState.textContent = 'HAND: STARTING';
-  const started = initializeHandWorker();
-  if (!started) {
-    handState.textContent = 'HAND: UNSUPPORTED';
-    setGestureGuide('HAND WORKER UNSUPPORTED', 'Touch controls still work');
-    return;
-  }
-  handTrackingActive = true;
-  videoFramePump(performance.now());
+  handOpacity += ((handVisible ? 1 : 0) - handOpacity) * expSmoothing(dt, handVisible ? 55 : 110);
+
+  const age = lastPointerSampleAt ? Math.min(now - lastPointerSampleAt, 80) : 0;
+  const predictedPointer = {
+    x: clamp(targetPointer.x + pointerVelocity.x * age, 0.02, 0.98),
+    y: clamp(targetPointer.y + pointerVelocity.y * age, 0.02, 0.98),
+  };
+  const p = expSmoothing(dt, 30);
+  smoothPointer.x += (predictedPointer.x - smoothPointer.x) * p;
+  smoothPointer.y += (predictedPointer.y - smoothPointer.y) * p;
+
+  worlds.forEach((world, index) => {
+    const size = overlaySizes[index];
+    const cursor = cursors[index];
+    const px = smoothPointer.x * size.width;
+    const py = smoothPointer.y * size.height;
+    cursor.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0) translate(-50%, -50%)`;
+    cursor.style.opacity = handVisible ? '1' : '0.18';
+    cursor.classList.toggle('pinching', pinchDown);
+    cursor.classList.toggle('targeted', Boolean(hoveredAction));
+    drawHand(handCanvases[index], size, handOpacity);
+  });
+
+  updateInteraction(now);
+  requestAnimationFrame(renderFrame);
 }
 
 async function requestImmersiveMode() {
@@ -601,7 +655,7 @@ async function requestImmersiveMode() {
 
 async function startVR() {
   startButton.disabled = true;
-  startStatus.textContent = `Starting real-time build ${BUILD_ID}…`;
+  startStatus.textContent = `Starting ${BUILD_ID}…`;
 
   await enableMotion();
   const cameraOkay = await enableCamera();
@@ -610,20 +664,21 @@ async function startVR() {
 
   startScreen.classList.add('hidden');
   requestAnimationFrame(() => {
-    updateCursorSizes();
+    resizeOverlays();
     recenter();
   });
 
   setPanel(
-    cameraOkay ? 'Real-time mode active' : 'Head tracking active',
+    cameraOkay ? 'Tracking active' : 'Head tracking active',
     cameraOkay
-      ? 'Gyro-first head tracking + worker hand tracking. Point with INDEX, pinch thumb + index to select.'
-      : 'Move your head to test tracking. Rear camera is unavailable for hand input.'
+      ? 'Green hand = detected hand. Green ring = index fingertip. Pinch thumb + index to click.'
+      : 'Rear camera unavailable, so hand control is disabled.'
   );
 }
 
 startButton.addEventListener('click', startVR);
 recenterButton.addEventListener('click', recenter);
+
 worlds.forEach((world) => {
   world.addEventListener('click', (event) => {
     const button = event.target.closest('button[data-action]');
@@ -631,26 +686,24 @@ worlds.forEach((world) => {
   });
 });
 
-window.addEventListener('resize', () => requestAnimationFrame(updateCursorSizes), { passive: true });
+window.addEventListener('resize', () => requestAnimationFrame(resizeOverlays), { passive: true });
 window.addEventListener('orientationchange', () => {
   setTimeout(() => {
-    updateCursorSizes();
-    recenter();
-  }, 180);
+    resizeOverlays();
+    if (currentQuat) recenter();
+  }, 220);
 }, { passive: true });
 
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    gyroRate = { yaw: 0, pitch: 0, roll: 0 };
-  }
+  if (!document.hidden && handTrackingActive) scheduleHandFrame(40);
 });
 
 window.addEventListener('pagehide', () => {
   renderLoopActive = false;
   handTrackingActive = false;
-  if (videoFrameHandle && typeof camera.cancelVideoFrameCallback === 'function') camera.cancelVideoFrameCallback(videoFrameHandle);
-  handWorker?.terminate();
+  clearTimeout(handTimer);
   stream?.getTracks().forEach((track) => track.stop());
 });
 
+resizeOverlays();
 requestAnimationFrame(renderFrame);
