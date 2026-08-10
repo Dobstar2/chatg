@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#05070b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="SpatialHands" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <title>SpatialHands VR</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -13,10 +17,19 @@
   <div id="startScreen" class="start-screen">
     <div class="start-card">
       <div class="orb">◉</div>
+      <div id="startBuild" class="build-chip">BUILD</div>
       <h1>SpatialHands VR</h1>
-      <p>Phone-headset mode with split-screen stereo, motion head tracking, rear-camera hand tracking and pinch-to-select.</p>
+      <p>Phone-headset mode with split-screen stereo, landscape head tracking, rear-camera hand tracking and pinch-to-select.</p>
+      <div class="gesture-demo">
+        <div class="gesture-step"><b>1</b><span>Show your index finger</span><span class="finger">☝</span></div>
+        <div class="gesture-step"><b>2</b><span>Move the white ring onto a tile</span><span class="ring-demo"></span></div>
+        <div class="gesture-step"><b>3</b><span>Touch thumb + index together</span><span class="finger">👌</span></div>
+      </div>
       <button id="startButton" class="primary">Enter VR</button>
-      <p id="startStatus" class="small">Rotate your iPhone to landscape, place it in your headset, then tap Enter VR.</p>
+      <p id="startStatus" class="small">Rotate your iPhone to landscape, then tap Enter VR.</p>
+      <div id="installHint" class="install-hint">
+        <strong>For no Safari toolbar:</strong> tap Share → Add to Home Screen, then open SpatialHands from your Home Screen.
+      </div>
     </div>
   </div>
 
@@ -31,7 +44,9 @@
   </main>
 
   <div class="hud" id="hud">
+    <span id="buildState" class="build-state">BUILD</span>
     <span id="motionState">HEAD: OFF</span>
+    <span id="lookState">LOOK: CENTER</span>
     <span id="handState">HAND: OFF</span>
     <span id="cameraState">CAMERA: OFF</span>
   </div>
@@ -49,12 +64,17 @@
         <div class="status-dot"></div>
       </header>
 
+      <div class="gesture-status glass">
+        <strong data-gesture-state>SHOW HAND TO REAR CAMERA</strong>
+        <span data-target-state>Index finger moves the ring</span>
+      </div>
+
       <div class="hero glass">
         <div class="hero-orb"></div>
         <div>
           <div class="eyebrow">VR WEB SHELL</div>
           <h2>Look around. Point. Pinch.</h2>
-          <p>Move your head to shift the view. Hold your hand in front of the rear camera and pinch thumb-to-index to select.</p>
+          <p>Move your head to shift the view. Point with your index finger. Touch thumb + index together to click.</p>
         </div>
       </div>
 
@@ -69,7 +89,7 @@
           <span class="icon">◉</span><span>Passthrough</span><small>Rear camera</small>
         </button>
         <button class="app-tile glass" data-action="settings">
-          <span class="icon">⌁</span><span>Tracking</span><small>Calibration</small>
+          <span class="icon">⌁</span><span>Tracking</span><small>Flip finger mapping</small>
         </button>
       </div>
 
@@ -81,7 +101,7 @@
 
       <div class="panel glass" data-panel="message">
         <strong>Ready</strong>
-        <span>Pinch over a tile to open it.</span>
+        <span>Point with your index finger, then pinch thumb + index to select.</span>
       </div>
 
       <div class="cursor" aria-hidden="true"><span></span></div>
