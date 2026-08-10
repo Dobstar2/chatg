@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="SpatialHands" />
   <link rel="manifest" href="manifest.webmanifest" />
   <title>SpatialHands VR</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=0.7.0" />
 </head>
 <body>
   <video id="camera" playsinline muted></video>
@@ -17,16 +17,16 @@
   <div id="startScreen" class="start-screen">
     <div class="start-card">
       <div class="orb">◉</div>
-      <div id="startBuild" class="build-chip">BUILD</div>
+      <div id="startBuild" class="build-chip">REAL-TIME BUILD</div>
       <h1>SpatialHands VR</h1>
-      <p>Phone-headset mode with split-screen stereo, landscape head tracking, rear-camera hand tracking and pinch-to-select.</p>
+      <p>Low-latency phone-headset mode with split-screen stereo, gyro-predicted head tracking, rear-camera hand tracking and pinch-to-select.</p>
       <div class="gesture-demo">
         <div class="gesture-step"><b>1</b><span>Show your index finger</span><span class="finger">☝</span></div>
         <div class="gesture-step"><b>2</b><span>Move the white ring onto a tile</span><span class="ring-demo"></span></div>
         <div class="gesture-step"><b>3</b><span>Touch thumb + index together</span><span class="finger">👌</span></div>
       </div>
-      <button id="startButton" class="primary">Enter VR</button>
-      <p id="startStatus" class="small">Rotate your iPhone to landscape, then tap Enter VR.</p>
+      <button id="startButton" class="primary">Enter Real-Time VR</button>
+      <p id="startStatus" class="small">Rotate your iPhone to landscape, then tap Enter Real-Time VR.</p>
       <div id="installHint" class="install-hint">
         <strong>For no Safari toolbar:</strong> tap Share → Add to Home Screen, then open SpatialHands from your Home Screen.
       </div>
@@ -72,9 +72,9 @@
       <div class="hero glass">
         <div class="hero-orb"></div>
         <div>
-          <div class="eyebrow">VR WEB SHELL</div>
-          <h2>Look around. Point. Pinch.</h2>
-          <p>Move your head to shift the view. Point with your index finger. Touch thumb + index together to click.</p>
+          <div class="eyebrow">REAL-TIME VR MODE</div>
+          <h2>Move. Point. Pinch.</h2>
+          <p>Gyroscope drives the headset view immediately. Hand AI runs separately so it cannot stall head motion.</p>
         </div>
       </div>
 
@@ -108,6 +108,6 @@
     </div>
   </template>
 
-  <script type="module" src="script.js"></script>
+  <script type="module" src="script.js?v=0.7.0"></script>
 </body>
 </html>
