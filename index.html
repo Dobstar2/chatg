@@ -1,67 +1,93 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MeetSpark — Chromebook Google Meet Companion</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <main class="app">
-      <header>
-        <h1>MeetSpark</h1>
-        <p>Make every Google Meet session more fun, organized, and interactive on Chromebook.</p>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#05070b" />
+  <title>SpatialHands VR</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <video id="camera" playsinline muted></video>
+
+  <div id="startScreen" class="start-screen">
+    <div class="start-card">
+      <div class="orb">◉</div>
+      <h1>SpatialHands VR</h1>
+      <p>Phone-headset mode with split-screen stereo, motion head tracking, rear-camera hand tracking and pinch-to-select.</p>
+      <button id="startButton" class="primary">Enter VR</button>
+      <p id="startStatus" class="small">Rotate your iPhone to landscape, place it in your headset, then tap Enter VR.</p>
+    </div>
+  </div>
+
+  <main id="vrRoot" class="vr-root" aria-label="SpatialHands VR stereo interface">
+    <section class="eye" id="leftEye">
+      <div class="world" data-eye="left"></div>
+    </section>
+    <div class="divider"></div>
+    <section class="eye" id="rightEye">
+      <div class="world" data-eye="right"></div>
+    </section>
+  </main>
+
+  <div class="hud" id="hud">
+    <span id="motionState">HEAD: OFF</span>
+    <span id="handState">HAND: OFF</span>
+    <span id="cameraState">CAMERA: OFF</span>
+  </div>
+
+  <button id="recenterButton" class="recenter" aria-label="Recenter view">◎</button>
+
+  <template id="worldTemplate">
+    <div class="sky-glow"></div>
+    <div class="shell">
+      <header class="topbar glass">
+        <div>
+          <div class="eyebrow">SPATIALHANDS</div>
+          <div class="title">Home</div>
+        </div>
+        <div class="status-dot"></div>
       </header>
 
-      <section class="card connect">
-        <h2>1) Launch your Meet</h2>
-        <div class="row">
-          <input id="meetUrl" type="url" placeholder="Paste a Google Meet link (https://meet.google.com/...)" />
-          <button id="openMeet">Open Meet</button>
+      <div class="hero glass">
+        <div class="hero-orb"></div>
+        <div>
+          <div class="eyebrow">VR WEB SHELL</div>
+          <h2>Look around. Point. Pinch.</h2>
+          <p>Move your head to shift the view. Hold your hand in front of the rear camera and pinch thumb-to-index to select.</p>
         </div>
-        <small id="urlHelp">Meet opens in a new tab while this companion stays here.</small>
-      </section>
+      </div>
 
-      <section class="grid">
-        <article class="card">
-          <h2>2) Reaction Board</h2>
-          <p>One-click hype reactions for your group.</p>
-          <div class="reaction-grid" id="reactionGrid"></div>
-          <p class="live" id="reactionFeed">No reactions yet.</p>
-        </article>
+      <div class="app-grid">
+        <button class="app-tile glass" data-action="browser">
+          <span class="icon">◌</span><span>Browser</span><small>Web surface</small>
+        </button>
+        <button class="app-tile glass" data-action="media">
+          <span class="icon">▶</span><span>Media</span><small>Local player</small>
+        </button>
+        <button class="app-tile glass" data-action="passthrough">
+          <span class="icon">◉</span><span>Passthrough</span><small>Rear camera</small>
+        </button>
+        <button class="app-tile glass" data-action="settings">
+          <span class="icon">⌁</span><span>Tracking</span><small>Calibration</small>
+        </button>
+      </div>
 
-        <article class="card">
-          <h2>3) Focus Sprint Timer</h2>
-          <p>Keep meetings tight with short sprints.</p>
-          <div class="timer" id="timerDisplay">10:00</div>
-          <div class="row">
-            <button id="startTimer">Start</button>
-            <button id="pauseTimer">Pause</button>
-            <button id="resetTimer">Reset</button>
-          </div>
-        </article>
+      <div class="dock glass">
+        <button data-action="home">⌂</button>
+        <button data-action="recenter">◎</button>
+        <button data-action="info">i</button>
+      </div>
 
-        <article class="card">
-          <h2>4) Spin-the-Idea Wheel</h2>
-          <p>Pick discussion prompts instantly.</p>
-          <div class="row">
-            <input id="ideaInput" type="text" placeholder="Add a topic or question" />
-            <button id="addIdea">Add</button>
-          </div>
-          <ul id="ideaList"></ul>
-          <button id="spinIdea">Spin</button>
-          <p class="live" id="ideaResult">Add topics and spin.</p>
-        </article>
-      </section>
+      <div class="panel glass" data-panel="message">
+        <strong>Ready</strong>
+        <span>Pinch over a tile to open it.</span>
+      </div>
 
-      <section class="card">
-        <h2>5) Shared Energy Meter</h2>
-        <p>Quick pulse-check after activities.</p>
-        <input id="energy" type="range" min="1" max="10" value="7" />
-        <p class="live">Current energy: <strong id="energyValue">7</strong>/10</p>
-      </section>
-    </main>
+      <div class="cursor" aria-hidden="true"><span></span></div>
+    </div>
+  </template>
 
-    <script src="script.js"></script>
-  </body>
+  <script type="module" src="script.js"></script>
+</body>
 </html>
