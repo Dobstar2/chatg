@@ -2,18 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#030711" />
-  <meta http-equiv="refresh" content="0; url=./pocket-vr-next/?build=0.1.2" />
-  <link rel="canonical" href="./pocket-vr-next/" />
-  <title>Pocket VR</title>
-  <style>
-    html,body{margin:0;width:100%;height:100%;display:grid;place-items:center;background:#030711;color:#f7f9ff;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}
-    a{color:#74f6c2;font-weight:800}
-  </style>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Pocket VR" />
+  <link rel="manifest" href="./manifest.webmanifest?v=0.1.2-root2" />
+  <title>Pocket VR — Tracking Foundation 0.1.2</title>
+  <link rel="stylesheet" href="./pocket-vr-next/styles.css?v=0.1.2-root2" />
 </head>
 <body>
-  <p>Opening Pocket VR Next… <a href="./pocket-vr-next/?build=0.1.2">Tap here if it does not open.</a></p>
-  <script>location.replace('./pocket-vr-next/?build=0.1.2');</script>
+  <video id="trackingVideo" playsinline muted></video>
+
+  <main id="stereoRoot" aria-label="Pocket VR stereo view">
+    <section class="eye" aria-label="Left eye">
+      <canvas id="leftEyeCanvas"></canvas>
+    </section>
+    <div class="divider" aria-hidden="true"></div>
+    <section class="eye" aria-label="Right eye">
+      <canvas id="rightEyeCanvas"></canvas>
+    </section>
+  </main>
+
+  <section id="startOverlay" class="start-overlay">
+    <article class="start-card">
+      <div id="buildLabel" class="build-label">BUILD tracking-foundation-0.1.2</div>
+      <h1>Pocket VR Tracking Foundation</h1>
+      <p class="lead">Two-hand tracking, estimated 3D depth, world-space interaction, stable head orientation, and a full-screen stereo viewport.</p>
+
+      <div id="permissionList" class="requirements">
+        <div><strong>Rear camera</strong><span data-state="camera">Permission required</span></div>
+        <div><strong>Head sensors</strong><span data-state="motion">Permission required</span></div>
+        <div><strong>Two-hand model</strong><span data-state="hands">Loads after camera permission</span></div>
+      </div>
+
+      <div class="instructions">
+        <span>1. Rotate the iPhone to landscape.</span>
+        <span>2. Hold both hands where the rear camera can see them.</span>
+        <span>3. Point for far interaction; pinch thumb + index to select or grab.</span>
+        <span>4. Use Recalibrate Hands separately from Recenter View.</span>
+      </div>
+
+      <button id="enterButton" class="enter-button">Enter Pocket VR</button>
+      <p id="startStatus" class="status">Ready to request permissions.</p>
+      <p class="standalone-hint">For the cleanest iPhone view: Share → Add to Home Screen, then launch Pocket VR from the Home Screen icon.</p>
+    </article>
+  </section>
+
+  <div id="touchControls" aria-label="Touch fallback controls">
+    <button id="touchRecenter">◎ Recenter</button>
+    <button id="touchCalibrate">✋ Calibrate</button>
+  </div>
+
+  <script type="module" src="./pocket-vr-next/app.js?v=0.1.2-root2"></script>
 </body>
 </html>
