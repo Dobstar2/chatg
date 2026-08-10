@@ -37,9 +37,9 @@ html {
 body {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: var(--app-height);
-  min-height: var(--app-height);
+  width: 100dvw;
+  height: 100dvh;
+  min-height: 100dvh;
   touch-action: none;
 }
 
@@ -58,47 +58,79 @@ button {
   pointer-events: none;
 }
 
+/*
+  Stereo geometry is intentionally hard-pinned here. The renderer may change
+  canvas backing-buffer pixel sizes, but it must never be allowed to shrink the
+  CSS box of either eye. Each eye always owns exactly one half of the live
+  viewport and each canvas always fills that half.
+*/
 #stereoRoot {
-  position: fixed;
+  position: fixed !important;
   z-index: 0;
-  left: 0;
-  top: 0;
-  width: 100vw;
-  height: var(--app-height);
-  min-height: var(--app-height);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: 1fr;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100dvw !important;
+  height: 100dvh !important;
+  min-width: 100dvw !important;
+  min-height: 100dvh !important;
+  display: block !important;
   background: var(--background);
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
-.eye {
-  position: relative;
-  width: 100%;
-  min-width: 0;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+#stereoRoot > .eye {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 50% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  overflow: hidden !important;
 }
 
+#stereoRoot > .eye:first-of-type {
+  left: 0 !important;
+  right: auto !important;
+}
+
+#stereoRoot > .eye:last-of-type {
+  left: 50% !important;
+  right: auto !important;
+}
+
+#leftEyeCanvas,
+#rightEyeCanvas,
 .eye canvas {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
+  position: absolute !important;
+  inset: 0 !important;
+  left: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
   touch-action: none;
 }
 
 .divider {
-  position: fixed;
+  position: fixed !important;
   z-index: 5;
-  left: 50vw;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  transform: translateX(-1px);
+  left: 50dvw !important;
+  top: 0 !important;
+  bottom: auto !important;
+  width: 2px !important;
+  height: 100dvh !important;
+  transform: translateX(-1px) !important;
   background: rgba(255,255,255,.13);
   pointer-events: none;
 }
@@ -107,8 +139,8 @@ button {
   position: fixed;
   z-index: 100;
   inset: 0;
-  width: 100vw;
-  height: var(--app-height);
+  width: 100dvw;
+  height: 100dvh;
   display: grid;
   place-items: center;
   overflow: auto;
