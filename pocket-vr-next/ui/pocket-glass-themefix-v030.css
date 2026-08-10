@@ -1,0 +1,24 @@
+html[data-pocket-theme="light"] .start-overlay {
+  background:
+    radial-gradient(circle at 50% 6%, rgba(102,174,244,.28), transparent 28%),
+    radial-gradient(circle at 95% 48%, rgba(167,151,246,.16), transparent 33%),
+    radial-gradient(circle at 8% 90%, rgba(81,196,174,.13), transparent 32%),
+    linear-gradient(180deg, #eef5fb 0%, #dfe9f2 58%, #d6e1ea 100%) !important;
+}
+
+html[data-pocket-theme="light"] .build-label,
+html[data-pocket-theme="light"] .pocket-status-capsule {
+  background: rgba(255,255,255,.46) !important;
+  border-color: rgba(255,255,255,.78) !important;
+}
+
+html[data-pocket-theme="light"] .pocket-secondary-button,
+html[data-pocket-theme="light"] .pocket-icon-button,
+html[data-pocket-theme="light"] .pocket-segmented,
+html[data-pocket-theme="light"] .pocket-toggle {
+  background: rgba(255,255,255,.38);
+}
+
+html[data-pocket-theme="light"] .pocket-sheet-backdrop {
+  background: rgba(76,92,112,.18);
+}
