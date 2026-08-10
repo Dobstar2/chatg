@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="SpatialHands" />
-  <link rel="manifest" href="manifest.webmanifest?v=0.9.0-root" />
-  <title>SpatialHands VR v0.9.0</title>
-  <link rel="stylesheet" href="styles.css?v=0.9.0-root" />
+  <link rel="manifest" href="manifest.webmanifest?v=0.9.1-root" />
+  <title>SpatialHands VR v0.9.1</title>
+  <link rel="stylesheet" href="styles.css?v=0.9.1-root" />
 </head>
 <body>
   <video id="camera" playsinline muted></video>
@@ -17,9 +17,9 @@
   <div id="startScreen" class="start-screen">
     <div class="start-card">
       <div class="orb">◉</div>
-      <div id="startBuild" class="build-chip">BUILD v0.9.0</div>
+      <div id="startBuild" class="build-chip">BUILD v0.9.1</div>
       <h1>SpatialHands VR</h1>
-      <p>World-anchored headset menu with rear-camera hand tracking and pinch interaction.</p>
+      <p>World-anchored spatial menu, head-locked stereo HUD, rear-camera hand tracking, and damped inertial positional parallax.</p>
       <div class="gesture-demo">
         <div class="gesture-step"><b>1</b><span>Hold one hand in front of the rear camera</span><span class="finger">✋</span></div>
         <div class="gesture-step"><b>2</b><span>Your INDEX fingertip controls the green ring</span><span class="finger">☝</span></div>
@@ -40,7 +40,7 @@
   </main>
 
   <div class="hud" id="hud">
-    <span id="buildState" class="build-state">BUILD v0.9.0</span>
+    <span id="buildState" class="build-state">BUILD v0.9.1</span>
     <span id="motionState">HEAD: OFF</span>
     <span id="lookState">LOOK: CENTER</span>
     <span id="handState">HAND: OFF</span>
@@ -64,8 +64,8 @@
         <div class="hero-orb"></div>
         <div>
           <div class="eyebrow">WORLD ANCHOR</div>
-          <h2>This menu stays where you placed it.</h2>
-          <p>Turn your head and the panel remains fixed in virtual space. Use ◎ to place it in front of you again.</p>
+          <h2>The menu stays in space. The HUD stays with you.</h2>
+          <p>Turn your head and the menu remains anchored. The visor HUD remains centered in each eye. Accelerometer data adds small positional parallax without pretending to be absolute 6DoF.</p>
         </div>
       </div>
       <div class="app-grid">
@@ -85,6 +85,6 @@
     <div class="cursor" aria-hidden="true"><span></span></div>
   </template>
 
-  <script type="module" src="boot-v090.js?v=0.9.0-root"></script>
+  <script type="module" src="boot-v091.js?v=0.9.1-root"></script>
 </body>
 </html>
