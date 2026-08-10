@@ -1,8 +1,8 @@
 const root = document.documentElement;
-const settingsSheet = document.getElementById('settingsSheet');
-const helpSheet = document.getElementById('helpSheet');
 const statusCapsule = document.getElementById('launchStatusCapsule');
 const permissionList = document.getElementById('permissionList');
+const startStatus = document.getElementById('startStatus');
+const buildLabel = document.getElementById('buildLabel');
 
 const defaults = {
   theme: 'automatic',
@@ -56,11 +56,7 @@ document.addEventListener('click', (event) => {
     openSheet(document.getElementById(open.dataset.openSheet));
     return;
   }
-  if (event.target.closest('[data-close-sheet]')) {
-    closeSheets();
-    return;
-  }
-  if (event.target.classList.contains('pocket-sheet-backdrop')) {
+  if (event.target.closest('[data-close-sheet]') || event.target.classList.contains('pocket-sheet-backdrop')) {
     closeSheets();
     return;
   }
@@ -78,21 +74,46 @@ document.addEventListener('click', (event) => {
   }
 });
 
+function normalizeTrackingCopy() {
+  const hands = permissionList?.querySelector('[data-state="hands"]');
+  if (hands) {
+    if (/left \+ right|two-hand tracker ready|two hand/i.test(hands.textContent)) {
+      hands.textContent = 'Automatic · one or two hands';
+    } else if (/looking for left/i.test(hands.textContent)) {
+      hands.textContent = 'Show either hand · second optional';
+    } else if (/one hand detected/i.test(hands.textContent)) {
+      hands.textContent = 'One hand ready · second optional';
+    } else if (/two hands detected/i.test(hands.textContent)) {
+      hands.textContent = 'Both hands ready';
+    }
+  }
+  if (startStatus && /two-hand tracking/i.test(startStatus.textContent)) {
+    startStatus.textContent = 'Starting automatic hand tracking…';
+  }
+}
+
 function updateStatus() {
+  normalizeTrackingCopy();
   if (!statusCapsule) return;
   const time = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(new Date());
   const camera = permissionList?.querySelector('[data-state="camera"]')?.textContent || 'Camera';
   const hands = permissionList?.querySelector('[data-state="hands"]')?.textContent || 'Hands';
-  const active = /ready|detected|looking/i.test(camera) || /ready|detected|looking/i.test(hands);
+  const active = /ready|automatic|detected|looking|show either/i.test(camera) || /ready|automatic|detected|looking|show either/i.test(hands);
   statusCapsule.innerHTML = `<span class="pocket-status-dot"></span><span>${time}</span><span>${active ? 'Ready' : 'Setup'}</span>`;
 }
 
 applySettings();
+if (buildLabel) buildLabel.textContent = 'POCKET UI 0.3 · TRACKING 0.2';
+root.dataset.pocketUi = '0.3';
+normalizeTrackingCopy();
 updateStatus();
 setInterval(updateStatus, 15000);
 
 if (permissionList) {
   new MutationObserver(updateStatus).observe(permissionList, { childList: true, subtree: true, characterData: true });
+}
+if (startStatus) {
+  new MutationObserver(normalizeTrackingCopy).observe(startStatus, { childList: true, subtree: true, characterData: true });
 }
 
 window.matchMedia?.('(prefers-color-scheme: light)').addEventListener?.('change', () => {
