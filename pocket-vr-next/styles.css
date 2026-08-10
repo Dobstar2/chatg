@@ -6,6 +6,7 @@
   --text: #f7f9ff;
   --muted: #a5b1ca;
   --accent: #74f6c2;
+  --app-height: 100dvh;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui, sans-serif;
 }
 
@@ -17,17 +18,28 @@
 html,
 body {
   width: 100%;
+  min-width: 100%;
   height: 100%;
+  min-height: 100%;
   margin: 0;
+  padding: 0;
   overflow: hidden;
   background: var(--background);
   color: var(--text);
   overscroll-behavior: none;
 }
 
+html {
+  position: fixed;
+  inset: 0;
+}
+
 body {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: var(--app-height);
+  min-height: var(--app-height);
   touch-action: none;
 }
 
@@ -48,19 +60,31 @@ button {
 
 #stereoRoot {
   position: fixed;
-  inset: 0;
-  display: flex;
+  z-index: 0;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: var(--app-height);
+  min-height: var(--app-height);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: 1fr;
   background: var(--background);
+  overflow: hidden;
 }
 
 .eye {
   position: relative;
-  width: 50%;
+  width: 100%;
+  min-width: 0;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 
 .eye canvas {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -70,7 +94,7 @@ button {
 .divider {
   position: fixed;
   z-index: 5;
-  left: 50%;
+  left: 50vw;
   top: 0;
   bottom: 0;
   width: 2px;
@@ -83,6 +107,8 @@ button {
   position: fixed;
   z-index: 100;
   inset: 0;
+  width: 100vw;
+  height: var(--app-height);
   display: grid;
   place-items: center;
   overflow: auto;
@@ -278,7 +304,7 @@ body:not(.running) #touchControls {
   }
 }
 
-@media (display-mode: standalone) {
+@media (display-mode: standalone), (display-mode: fullscreen) {
   .standalone-hint {
     display: none;
   }
