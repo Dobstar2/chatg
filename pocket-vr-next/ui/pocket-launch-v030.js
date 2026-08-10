@@ -74,21 +74,26 @@ document.addEventListener('click', (event) => {
   }
 });
 
+function setTextIfChanged(node, text) {
+  if (node && node.textContent !== text) node.textContent = text;
+}
+
 function normalizeTrackingCopy() {
   const hands = permissionList?.querySelector('[data-state="hands"]');
   if (hands) {
-    if (/left \+ right|two-hand tracker ready|two hand/i.test(hands.textContent)) {
-      hands.textContent = 'Automatic · one or two hands';
-    } else if (/looking for left/i.test(hands.textContent)) {
-      hands.textContent = 'Show either hand · second optional';
-    } else if (/one hand detected/i.test(hands.textContent)) {
-      hands.textContent = 'One hand ready · second optional';
-    } else if (/two hands detected/i.test(hands.textContent)) {
-      hands.textContent = 'Both hands ready';
+    const text = hands.textContent || '';
+    if (/two-hand tracker ready|left \+ right/i.test(text)) {
+      setTextIfChanged(hands, 'Automatic · one or two hands');
+    } else if (/looking for left/i.test(text)) {
+      setTextIfChanged(hands, 'Show either hand · second optional');
+    } else if (/one hand detected/i.test(text)) {
+      setTextIfChanged(hands, 'One hand ready · second optional');
+    } else if (/two hands detected/i.test(text)) {
+      setTextIfChanged(hands, 'Both hands ready');
     }
   }
-  if (startStatus && /two-hand tracking/i.test(startStatus.textContent)) {
-    startStatus.textContent = 'Starting automatic hand tracking…';
+  if (startStatus && /two-hand tracking/i.test(startStatus.textContent || '')) {
+    setTextIfChanged(startStatus, 'Starting automatic hand tracking…');
   }
 }
 
