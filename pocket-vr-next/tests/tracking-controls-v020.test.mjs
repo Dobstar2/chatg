@@ -14,6 +14,7 @@ import { OneEuroScalar, RobustDepthFilter, VelocityEstimator } from '../tracking
 import { GestureDetectorV2 } from '../tracking/gesture-detector-v020.js';
 import { HandTrackingManagerV2 } from '../tracking/hand-tracking-v020.js';
 import { InteractionManagerV2 } from '../scene/interaction-manager-v020.js';
+import '../scene/interaction-fixes-v020.js';
 
 function baseLandmarks() {
   const points = Array.from({ length: 21 }, () => ({ x: 0.5, y: 0.5, z: 0 }));
@@ -56,6 +57,10 @@ function setPinchPoint(hand, point) {
   hand.jointsInteractionWorld[6] = { x: point.x, y: point.y, z: point.z + 0.025 };
 }
 
+function vLength(v) {
+  return Math.hypot(v.x, v.y, v.z);
+}
+
 test('adaptive scalar filter stabilizes stationary noise without freezing fast movement', () => {
   const filter = new OneEuroScalar({ minCutoff: 1.1, beta: 0.7 });
   let value = 0;
@@ -87,19 +92,16 @@ test('pinch hysteresis produces one start, held state, and one release', () => {
   let now = 0;
   const phases = [];
 
-  // Open.
   for (let i = 0; i < 4; i += 1) {
     now += 33;
     landmarks[4] = { x: 0.30, y: 0.45, z: 0 };
     phases.push(detector.process('left', landmarks, now, 0.95).pinchPhase);
   }
-  // Close thumb to index and hold.
   for (let i = 0; i < 8; i += 1) {
     now += 33;
     landmarks[4] = { x: 0.415, y: 0.265, z: 0 };
     phases.push(detector.process('left', landmarks, now, 0.95).pinchPhase);
   }
-  // Release.
   for (let i = 0; i < 8; i += 1) {
     now += 33;
     landmarks[4] = { x: 0.30, y: 0.45, z: 0 };
@@ -161,6 +163,21 @@ test('near poke crosses activation plane once without repeat firing', () => {
   assert.equal(actions, 1);
 });
 
+test('switching near buttons cannot inherit a poke crossing from the previous target', () => {
+  const interaction = new InteractionManagerV2();
+  const left = makeHand();
+  const right = makeHand();
+  right.tracked = right.interacting = right.interactionSafe = false;
+  const actions = [];
+  interaction.addEventListener('action', (event) => actions.push(event.detail.action));
+
+  left.jointsInteractionWorld[8] = { x: -0.38, y: 0.13, z: -1.22 };
+  interaction.update({ left, right }, 1000);
+  left.jointsInteractionWorld[8] = { x: 0.0, y: 0.13, z: -1.252 };
+  interaction.update({ left, right }, 1033);
+  assert.deepEqual(actions, []);
+});
+
 test('grab preserves contact offset and release velocity is clamped', () => {
   const interaction = new InteractionManagerV2();
   const left = makeHand();
@@ -186,10 +203,6 @@ test('grab preserves contact offset and release velocity is clamped', () => {
   assert.ok(vLength(object.velocity) <= 2.2 + 1e-6);
 });
 
-function vLength(v) {
-  return Math.hypot(v.x, v.y, v.z);
-}
-
 test('two-hand scaling remains bounded when hand distance becomes extreme', () => {
   const interaction = new InteractionManagerV2();
   const left = makeHand();
@@ -207,6 +220,32 @@ test('two-hand scaling remains bounded when hand distance becomes extreme', () =
   for (let i = 0; i < 30; i += 1) interaction._updateHeldObjects({ left, right }, 1 / 60);
   assert.ok(object.size <= 0.32 + 1e-6);
   assert.ok(object.size >= 0.07 - 1e-6);
+});
+
+test('two-hand to one-hand transition rebases offset without a position jump', () => {
+  const interaction = new InteractionManagerV2();
+  const left = makeHand();
+  const right = makeHand();
+  const object = interaction.objects[0];
+  const leftStart = { x: object.position.x - 0.08, y: object.position.y, z: object.position.z };
+  const rightStart = { x: object.position.x + 0.08, y: object.position.y, z: object.position.z };
+  setPinchPoint(left, leftStart);
+  setPinchPoint(right, rightStart);
+  interaction._grabObject('left', object, leftStart, { left, right });
+  interaction._grabObject('right', object, rightStart, { left, right });
+
+  setPinchPoint(left, { x: -0.45, y: -0.20, z: -0.95 });
+  setPinchPoint(right, { x: 0.25, y: -0.20, z: -0.95 });
+  interaction._updateHeldObjects({ left, right }, 1 / 30);
+  const beforeRelease = { ...object.position };
+
+  left.gesture = { ...left.gesture, pinchPhase: 'release', pinchSerial: 2 };
+  right.gesture = { ...right.gesture, pinchPhase: 'held', pinchSerial: 1 };
+  interaction.update({ left, right }, 1100);
+  interaction.update({ left, right }, 1133);
+  assert.ok(Math.abs(object.position.x - beforeRelease.x) < 0.015);
+  assert.ok(Math.abs(object.position.y - beforeRelease.y) < 0.015);
+  assert.ok(Math.abs(object.position.z - beforeRelease.z) < 0.015);
 });
 
 test('multi-frame velocity estimator clamps tracking spikes', () => {
