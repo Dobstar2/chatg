@@ -1,1 +1,1 @@
-{"name":"Pocket VR Hand Controls","short_name":"Pocket VR","start_url":"./?build=tracking-controls-0.2.0","scope":"./","display":"standalone","orientation":"landscape","background_color":"#010308","theme_color":"#030711"}
+{"name":"Pocket VR","short_name":"Pocket VR","start_url":"./?ui=pocket-glass-0.3","scope":"./","display":"standalone","orientation":"landscape","background_color":"#07090f","theme_color":"#07090f","description":"iPhone-first spatial interface with automatic one- or two-hand controls."}
