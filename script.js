@@ -11,62 +11,115 @@ const worldTemplate = document.getElementById('worldTemplate');
 const worlds = [...document.querySelectorAll('.world')];
 worlds.forEach((world) => world.appendChild(worldTemplate.content.cloneNode(true)));
 
+const shells = worlds.map((world) => world.querySelector('.shell'));
+const cursors = worlds.map((world) => world.querySelector('.cursor'));
+const leftShell = shells[0];
+const leftButtons = [...worlds[0].querySelectorAll('button[data-action]')];
+
 let baseline = null;
 let latestOrientation = { alpha: 0, beta: 0, gamma: 0 };
+let targetPose = { yaw: 0, pitch: 0, roll: 0 };
+let smoothPose = { yaw: 0, pitch: 0, roll: 0 };
 let motionEnabled = false;
+let lastFrameAt = 0;
+let renderLoopActive = true;
+
 let stream = null;
 let handLandmarker = null;
 let handLoopActive = false;
-let lastHandTime = 0;
-let pointer = { x: 0.5, y: 0.5 };
-let smoothedPointer = { x: 0.5, y: 0.5 };
+let lastVideoTime = -1;
+let handIntervalMs = 100;
+let handTimer = null;
+
+let targetPointer = { x: 0.5, y: 0.5 };
+let smoothPointer = { x: 0.5, y: 0.5 };
+let handVisible = false;
 let pinchDown = false;
 let mirrorHand = true;
 let passthrough = false;
 let lastSelectionAt = 0;
+let hitRects = [];
+let lastHoverAction = null;
 
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 const angleDelta = (a, b) => ((a - b + 540) % 360) - 180;
+const expSmoothing = (dtMs, timeConstantMs) => 1 - Math.exp(-dtMs / timeConstantMs);
 
 function setPanel(title, message) {
   worlds.forEach((world) => {
     const panel = world.querySelector('[data-panel="message"]');
-    if (!panel) return;
-    panel.innerHTML = `<strong>${title}</strong><span>${message}</span>`;
+    if (panel) panel.innerHTML = `<strong>${title}</strong><span>${message}</span>`;
   });
 }
 
 function recenter() {
   baseline = { ...latestOrientation };
+  targetPose = { yaw: 0, pitch: 0, roll: 0 };
+  smoothPose = { yaw: 0, pitch: 0, roll: 0 };
   setPanel('Recentered', 'Forward direction reset to your current head position.');
 }
 
-function renderHeadPose() {
-  if (!motionEnabled || !baseline) return;
+function updateTargetPose() {
+  if (!baseline) return;
 
-  const yaw = clamp(angleDelta(latestOrientation.alpha, baseline.alpha), -38, 38);
-  const pitch = clamp(latestOrientation.beta - baseline.beta, -28, 28);
-  const roll = clamp(latestOrientation.gamma - baseline.gamma, -22, 22);
+  const yaw = clamp(angleDelta(latestOrientation.alpha, baseline.alpha), -36, 36);
+  const pitch = clamp(latestOrientation.beta - baseline.beta, -26, 26);
+  const roll = clamp(latestOrientation.gamma - baseline.gamma, -20, 20);
 
-  worlds.forEach((world) => {
-    const shell = world.querySelector('.shell');
-    const eyeOffset = world.dataset.eye === 'left' ? 4 : -4;
-    const tx = (-yaw * 2.1) + eyeOffset;
-    const ty = pitch * 1.45;
-    shell.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) rotateZ(${roll * -0.08}deg) rotateY(${yaw * 0.12}deg) rotateX(${pitch * -0.09}deg)`;
-  });
+  targetPose.yaw = Math.abs(yaw) < 0.16 ? 0 : yaw;
+  targetPose.pitch = Math.abs(pitch) < 0.16 ? 0 : pitch;
+  targetPose.roll = Math.abs(roll) < 0.2 ? 0 : roll;
 }
 
 function onOrientation(event) {
   latestOrientation = {
-    alpha: Number.isFinite(event.alpha) ? event.alpha : 0,
-    beta: Number.isFinite(event.beta) ? event.beta : 0,
-    gamma: Number.isFinite(event.gamma) ? event.gamma : 0,
+    alpha: Number.isFinite(event.alpha) ? event.alpha : latestOrientation.alpha,
+    beta: Number.isFinite(event.beta) ? event.beta : latestOrientation.beta,
+    gamma: Number.isFinite(event.gamma) ? event.gamma : latestOrientation.gamma,
   };
+
   if (!baseline) baseline = { ...latestOrientation };
-  motionEnabled = true;
-  motionState.textContent = 'HEAD: ON';
-  renderHeadPose();
+  updateTargetPose();
+
+  if (!motionEnabled) {
+    motionEnabled = true;
+    motionState.textContent = 'HEAD: ON';
+  }
+}
+
+function renderFrame(now) {
+  if (!renderLoopActive) return;
+
+  const dt = clamp(lastFrameAt ? now - lastFrameAt : 16.7, 8, 50);
+  lastFrameAt = now;
+
+  if (motionEnabled && baseline) {
+    const headAlpha = expSmoothing(dt, 52);
+    smoothPose.yaw += (targetPose.yaw - smoothPose.yaw) * headAlpha;
+    smoothPose.pitch += (targetPose.pitch - smoothPose.pitch) * headAlpha;
+    smoothPose.roll += (targetPose.roll - smoothPose.roll) * headAlpha;
+
+    shells.forEach((shell, index) => {
+      const eyeOffset = index === 0 ? 4 : -4;
+      const tx = (-smoothPose.yaw * 1.72) + eyeOffset;
+      const ty = smoothPose.pitch * 1.12;
+      shell.style.transform = `translate3d(calc(-50% + ${tx.toFixed(2)}px), calc(-50% + ${ty.toFixed(2)}px), 0) rotateZ(${(smoothPose.roll * -0.045).toFixed(2)}deg) rotateY(${(smoothPose.yaw * 0.085).toFixed(2)}deg) rotateX(${(smoothPose.pitch * -0.06).toFixed(2)}deg)`;
+    });
+  }
+
+  const pointerAlpha = expSmoothing(dt, handVisible ? 72 : 120);
+  smoothPointer.x += (targetPointer.x - smoothPointer.x) * pointerAlpha;
+  smoothPointer.y += (targetPointer.y - smoothPointer.y) * pointerAlpha;
+
+  cursors.forEach((cursor) => {
+    cursor.style.left = `${(smoothPointer.x * 100).toFixed(2)}%`;
+    cursor.style.top = `${(smoothPointer.y * 100).toFixed(2)}%`;
+    cursor.style.opacity = handVisible ? '1' : '0.35';
+    cursor.classList.toggle('pinching', pinchDown);
+  });
+
+  updateHoverFromCachedRects();
+  requestAnimationFrame(renderFrame);
 }
 
 async function enableMotion() {
@@ -75,7 +128,7 @@ async function enableMotion() {
       const permission = await DeviceOrientationEvent.requestPermission();
       if (permission !== 'granted') throw new Error('Motion permission was not granted.');
     }
-    window.addEventListener('deviceorientation', onOrientation, true);
+    window.addEventListener('deviceorientation', onOrientation, { capture: true, passive: true });
     motionState.textContent = 'HEAD: READY';
   } catch (error) {
     motionState.textContent = 'HEAD: BLOCKED';
@@ -101,54 +154,48 @@ function isDefinitelyFrontTrack(track) {
   return settings.facingMode === 'user' || /front|user|facetime|selfie/.test(label);
 }
 
+const rearConstraints = {
+  facingMode: { exact: 'environment' },
+  width: { ideal: 640, max: 960 },
+  height: { ideal: 360, max: 540 },
+  frameRate: { ideal: 24, max: 30 },
+};
+
 async function openRearByFacingMode() {
-  return navigator.mediaDevices.getUserMedia({
-    video: {
-      facingMode: { exact: 'environment' },
-      width: { ideal: 1280 },
-      height: { ideal: 720 },
-    },
-    audio: false,
-  });
+  return navigator.mediaDevices.getUserMedia({ video: rearConstraints, audio: false });
 }
 
 async function selectBestRearCamera() {
-  let initial = null;
+  let initial;
 
-  // First make a strict rear-facing request. Unlike `ideal`, `exact` must not
-  // intentionally fall back to the selfie camera.
   try {
     initial = await openRearByFacingMode();
   } catch (_) {
-    // Request temporary video permission only so Safari can reveal camera labels.
-    // This temporary stream is never displayed and is rejected if it is front-facing.
     initial = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
   }
 
   const devices = await navigator.mediaDevices.enumerateDevices();
-  const videoDevices = devices.filter((device) => device.kind === 'videoinput');
-  const rankedRearDevices = videoDevices
+  const preferred = devices
+    .filter((device) => device.kind === 'videoinput')
     .map((device) => ({ device, score: cameraScore(device) }))
     .filter(({ score }) => score > 0)
-    .sort((a, b) => b.score - a.score);
-
-  const preferred = rankedRearDevices[0]?.device;
+    .sort((a, b) => b.score - a.score)[0]?.device;
 
   if (preferred) {
     initial.getTracks().forEach((track) => track.stop());
     const selected = await navigator.mediaDevices.getUserMedia({
       video: {
         deviceId: { exact: preferred.deviceId },
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
+        width: { ideal: 640, max: 960 },
+        height: { ideal: 360, max: 540 },
+        frameRate: { ideal: 24, max: 30 },
       },
       audio: false,
     });
 
-    const selectedTrack = selected.getVideoTracks()[0];
-    if (isDefinitelyFrontTrack(selectedTrack)) {
+    if (isDefinitelyFrontTrack(selected.getVideoTracks()[0])) {
       selected.getTracks().forEach((track) => track.stop());
-      throw new Error('Safari selected the front camera instead of a rear camera.');
+      throw new Error('Front camera rejected.');
     }
     return selected;
   }
@@ -156,12 +203,8 @@ async function selectBestRearCamera() {
   const initialTrack = initial.getVideoTracks()[0];
   if (isDefinitelyFrontTrack(initialTrack)) {
     initial.getTracks().forEach((track) => track.stop());
-
-    // One final strict environment request. If Safari cannot satisfy it, fail closed:
-    // SpatialHands must never knowingly show the front camera.
     const rear = await openRearByFacingMode();
-    const rearTrack = rear.getVideoTracks()[0];
-    if (isDefinitelyFrontTrack(rearTrack)) {
+    if (isDefinitelyFrontTrack(rear.getVideoTracks()[0])) {
       rear.getTracks().forEach((track) => track.stop());
       throw new Error('No rear camera was exposed to Safari.');
     }
@@ -194,24 +237,18 @@ async function enableCamera() {
     if (caps.zoom && typeof track.applyConstraints === 'function') {
       try {
         await track.applyConstraints({ advanced: [{ zoom: caps.zoom.min }] });
-      } catch (_) {
-        // Safari may expose zoom metadata while refusing manual zoom changes.
-      }
+      } catch (_) {}
     }
 
-    const settings = typeof track.getSettings === 'function' ? track.getSettings() : {};
     const label = track.label || '';
-    const ultraWide = /ultra[ -]?wide|0\.5|0,5/i.test(label);
-    cameraState.textContent = ultraWide ? 'CAMERA: REAR 0.5X' : 'CAMERA: REAR';
-    camera.dataset.width = settings.width || camera.videoWidth;
-    camera.dataset.height = settings.height || camera.videoHeight;
+    cameraState.textContent = /ultra[ -]?wide|0\.5|0,5/i.test(label) ? 'CAMERA: REAR 0.5X' : 'CAMERA: REAR';
     return true;
-  } catch (error) {
+  } catch (_) {
     stream?.getTracks().forEach((track) => track.stop());
     stream = null;
     camera.srcObject = null;
     cameraState.textContent = 'CAMERA: REAR REQUIRED';
-    setPanel('Rear camera unavailable', 'The selfie camera has been blocked. Allow camera access in Safari and reload. SpatialHands will only continue with a rear camera.');
+    setPanel('Rear camera unavailable', 'The selfie camera is blocked. SpatialHands will only continue with a rear camera.');
     return false;
   }
 }
@@ -233,15 +270,15 @@ async function enableHandTracking() {
       },
       runningMode: 'VIDEO',
       numHands: 1,
-      minHandDetectionConfidence: 0.45,
-      minHandPresenceConfidence: 0.45,
-      minTrackingConfidence: 0.45,
+      minHandDetectionConfidence: 0.4,
+      minHandPresenceConfidence: 0.4,
+      minTrackingConfidence: 0.4,
     });
 
     handState.textContent = 'HAND: READY';
     handLoopActive = true;
-    requestAnimationFrame(handLoop);
-  } catch (error) {
+    scheduleHandFrame(80);
+  } catch (_) {
     handState.textContent = 'HAND: FALLBACK';
     setPanel('Hand model unavailable', 'Head tracking still works. Touch controls remain available.');
   }
@@ -251,38 +288,29 @@ function distance(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function updatePointer(x, y, isPinching) {
-  pointer.x = clamp(x, 0.04, 0.96);
-  pointer.y = clamp(y, 0.05, 0.95);
-  const smoothing = 0.34;
-  smoothedPointer.x += (pointer.x - smoothedPointer.x) * smoothing;
-  smoothedPointer.y += (pointer.y - smoothedPointer.y) * smoothing;
-
-  worlds.forEach((world) => {
-    const cursor = world.querySelector('.cursor');
-    cursor.style.left = `${smoothedPointer.x * 100}%`;
-    cursor.style.top = `${smoothedPointer.y * 100}%`;
-    cursor.classList.toggle('pinching', isPinching);
-  });
-
-  updateHover();
+function cacheHitRects() {
+  if (!leftShell) return;
+  hitRects = leftButtons.map((button) => ({
+    action: button.dataset.action,
+    left: button.offsetLeft,
+    top: button.offsetTop,
+    right: button.offsetLeft + button.offsetWidth,
+    bottom: button.offsetTop + button.offsetHeight,
+  }));
 }
 
-function buttonAtPointer() {
-  const leftEye = document.getElementById('leftEye');
-  const rect = leftEye.getBoundingClientRect();
-  const px = rect.left + smoothedPointer.x * rect.width;
-  const py = rect.top + smoothedPointer.y * rect.height;
-  const buttons = [...leftEye.querySelectorAll('button[data-action]')];
-  return buttons.find((button) => {
-    const r = button.getBoundingClientRect();
-    return px >= r.left && px <= r.right && py >= r.top && py <= r.bottom;
-  }) || null;
+function actionAtPointer() {
+  if (!leftShell) return null;
+  const x = smoothPointer.x * leftShell.clientWidth;
+  const y = smoothPointer.y * leftShell.clientHeight;
+  return hitRects.find((rect) => x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom)?.action || null;
 }
 
-function updateHover() {
-  const hovered = buttonAtPointer();
-  const action = hovered?.dataset.action;
+function updateHoverFromCachedRects() {
+  const action = handVisible ? actionAtPointer() : null;
+  if (action === lastHoverAction) return;
+  lastHoverAction = action;
+
   worlds.forEach((world) => {
     world.querySelectorAll('button[data-action]').forEach((button) => {
       button.classList.toggle('hovered', Boolean(action && button.dataset.action === action));
@@ -295,7 +323,7 @@ function triggerAction(action) {
   if (now - lastSelectionAt < 380) return;
   lastSelectionAt = now;
 
-  if (navigator.vibrate) navigator.vibrate(25);
+  if (navigator.vibrate) navigator.vibrate(18);
 
   switch (action) {
     case 'passthrough':
@@ -311,13 +339,13 @@ function triggerAction(action) {
       recenter();
       break;
     case 'browser':
-      setPanel('Browser', 'Web surface selected. This prototype keeps navigation inside the spatial shell.');
+      setPanel('Browser', 'Web surface selected.');
       break;
     case 'media':
-      setPanel('Media', 'Media surface selected. Touch or pinch another tile to continue.');
+      setPanel('Media', 'Media surface selected.');
       break;
     case 'info':
-      setPanel('SpatialHands VR', 'Stereo web prototype using iPhone motion sensors plus on-device browser hand landmarks.');
+      setPanel('SpatialHands VR', 'Optimized stereo web prototype with filtered motion and adaptive hand tracking.');
       break;
     case 'home':
     default:
@@ -326,42 +354,62 @@ function triggerAction(action) {
   }
 }
 
-async function handLoop(now) {
+function scheduleHandFrame(delay = handIntervalMs) {
+  clearTimeout(handTimer);
+  if (!handLoopActive) return;
+  handTimer = setTimeout(processHandFrame, delay);
+}
+
+function processHandFrame() {
   if (!handLoopActive) return;
 
-  if (handLandmarker && camera.readyState >= 2 && now - lastHandTime > 42) {
-    lastHandTime = now;
-    try {
-      const result = handLandmarker.detectForVideo(camera, now);
-      const landmarks = result.landmarks?.[0];
-      if (landmarks) {
-        const wrist = landmarks[0];
-        const thumbTip = landmarks[4];
-        const indexTip = landmarks[8];
-        const middleMcp = landmarks[9];
-        const palmScale = Math.max(distance(wrist, middleMcp), 0.025);
-        const pinchRatio = distance(thumbTip, indexTip) / palmScale;
-        const nextPinch = pinchDown ? pinchRatio < 0.56 : pinchRatio < 0.38;
-
-        const x = mirrorHand ? 1 - indexTip.x : indexTip.x;
-        updatePointer(x, indexTip.y, nextPinch);
-        handState.textContent = nextPinch ? 'HAND: PINCH' : 'HAND: ON';
-
-        if (nextPinch && !pinchDown) {
-          const target = buttonAtPointer();
-          if (target) triggerAction(target.dataset.action);
-        }
-        pinchDown = nextPinch;
-      } else {
-        handState.textContent = 'HAND: SEARCH';
-        pinchDown = false;
-      }
-    } catch (_) {
-      // Keep the render loop alive if one camera frame cannot be processed.
-    }
+  if (document.hidden || !handLandmarker || camera.readyState < 2) {
+    scheduleHandFrame(140);
+    return;
   }
 
-  requestAnimationFrame(handLoop);
+  if (camera.currentTime === lastVideoTime) {
+    scheduleHandFrame(40);
+    return;
+  }
+  lastVideoTime = camera.currentTime;
+
+  const started = performance.now();
+  try {
+    const result = handLandmarker.detectForVideo(camera, started);
+    const landmarks = result.landmarks?.[0];
+
+    if (landmarks) {
+      const wrist = landmarks[0];
+      const thumbTip = landmarks[4];
+      const indexTip = landmarks[8];
+      const middleMcp = landmarks[9];
+      const palmScale = Math.max(distance(wrist, middleMcp), 0.025);
+      const pinchRatio = distance(thumbTip, indexTip) / palmScale;
+      const nextPinch = pinchDown ? pinchRatio < 0.58 : pinchRatio < 0.36;
+
+      targetPointer.x = clamp(mirrorHand ? 1 - indexTip.x : indexTip.x, 0.04, 0.96);
+      targetPointer.y = clamp(indexTip.y, 0.05, 0.95);
+      handVisible = true;
+      handState.textContent = nextPinch ? 'HAND: PINCH' : 'HAND: ON';
+
+      if (nextPinch && !pinchDown) {
+        const action = actionAtPointer();
+        if (action) triggerAction(action);
+      }
+      pinchDown = nextPinch;
+    } else {
+      handVisible = false;
+      pinchDown = false;
+      handState.textContent = 'HAND: SEARCH';
+    }
+  } catch (_) {
+    handState.textContent = 'HAND: RETRY';
+  }
+
+  const workMs = performance.now() - started;
+  handIntervalMs = clamp(Math.round(workMs * 2.4), 85, 165);
+  scheduleHandFrame(handIntervalMs);
 }
 
 async function requestFullscreenAndLandscape() {
@@ -376,7 +424,7 @@ async function requestFullscreenAndLandscape() {
 
 async function startVR() {
   startButton.disabled = true;
-  startStatus.textContent = 'Starting motion, rear camera and hand tracking…';
+  startStatus.textContent = 'Starting optimized tracking…';
 
   await enableMotion();
   const cameraOkay = await enableCamera();
@@ -384,9 +432,14 @@ async function startVR() {
   await requestFullscreenAndLandscape();
 
   startScreen.classList.add('hidden');
+  requestAnimationFrame(() => {
+    cacheHitRects();
+    recenter();
+  });
+
   setPanel(
     cameraOkay ? 'SpatialHands active' : 'Head tracking active',
-    cameraOkay ? 'Rear camera locked. Move your head, then point and pinch.' : 'Rear camera was not available, so the selfie camera was blocked.'
+    cameraOkay ? 'Smooth mode active: filtered head motion and adaptive hand tracking.' : 'Rear camera unavailable, so hand tracking is off.'
   );
 }
 
@@ -400,7 +453,18 @@ worlds.forEach((world) => {
   });
 });
 
+window.addEventListener('resize', () => requestAnimationFrame(cacheHitRects), { passive: true });
+window.addEventListener('orientationchange', () => setTimeout(cacheHitRects, 250), { passive: true });
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && handLoopActive) scheduleHandFrame(60);
+});
+
 window.addEventListener('pagehide', () => {
+  renderLoopActive = false;
   handLoopActive = false;
+  clearTimeout(handTimer);
   stream?.getTracks().forEach((track) => track.stop());
 });
+
+requestAnimationFrame(renderFrame);
