@@ -1,4 +1,4 @@
-const BUILD_ID = 'v0.7.0';
+const BUILD_ID = 'v0.7.1';
 const BUILD_TIME = '10 Aug 2026 17:22 BST';
 
 const camera = document.getElementById('camera');
@@ -267,13 +267,18 @@ function renderFrame(now) {
 
 async function enableMotion() {
   try {
+    const permissionRequests = [];
+
     if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-      const permission = await DeviceMotionEvent.requestPermission();
-      if (permission !== 'granted') throw new Error('Motion permission was not granted.');
+      permissionRequests.push(DeviceMotionEvent.requestPermission());
     }
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-      const permission = await DeviceOrientationEvent.requestPermission();
-      if (permission !== 'granted') throw new Error('Orientation permission was not granted.');
+      permissionRequests.push(DeviceOrientationEvent.requestPermission());
+    }
+
+    const results = await Promise.all(permissionRequests);
+    if (results.some((permission) => permission !== 'granted')) {
+      throw new Error('Motion and orientation permission are required.');
     }
 
     window.addEventListener('deviceorientation', onOrientation, { capture: true, passive: true });
