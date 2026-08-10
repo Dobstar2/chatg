@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="SpatialHands" />
-  <link rel="manifest" href="manifest.webmanifest?v=0.9.2-root" />
-  <title>SpatialHands VR v0.9.2</title>
-  <link rel="stylesheet" href="styles.css?v=0.9.2-root" />
+  <link rel="manifest" href="manifest.webmanifest?v=0.9.3-root" />
+  <title>SpatialHands VR v0.9.3</title>
+  <link rel="stylesheet" href="styles.css?v=0.9.3-root" />
 </head>
 <body>
   <video id="camera" playsinline muted></video>
@@ -17,9 +17,9 @@
   <div id="startScreen" class="start-screen">
     <div class="start-card">
       <div class="orb">◉</div>
-      <div id="startBuild" class="build-chip">BUILD v0.9.2</div>
+      <div id="startBuild" class="build-chip">BUILD v0.9.3</div>
       <h1>SpatialHands VR</h1>
-      <p>Centered stereo world anchor, head-locked HUD, rear-camera hand tracking and subtle inertial parallax.</p>
+      <p>World-anchored menu with a true fixed visor HUD, rear-camera hand tracking and subtle inertial parallax.</p>
       <div class="gesture-demo">
         <div class="gesture-step"><b>1</b><span>Hold one hand in front of the rear camera</span><span class="finger">✋</span></div>
         <div class="gesture-step"><b>2</b><span>Your INDEX fingertip controls the green ring</span><span class="finger">☝</span></div>
@@ -40,7 +40,7 @@
   </main>
 
   <div class="hud" id="hud">
-    <span id="buildState" class="build-state">BUILD v0.9.2</span>
+    <span id="buildState" class="build-state">BUILD v0.9.3</span>
     <span id="motionState">HEAD: OFF</span>
     <span id="lookState">LOOK: CENTER</span>
     <span id="handState">HAND: OFF</span>
@@ -64,8 +64,8 @@
         <div class="hero-orb"></div>
         <div>
           <div class="eyebrow">WORLD ANCHOR</div>
-          <h2>Placed in front of you, then anchored.</h2>
-          <p>The menu starts centered in both eyes after tracking settles. Turn your head and it stays in virtual space. Use ◎ to place it in front of you again.</p>
+          <h2>The menu stays in space. The HUD stays on your visor.</h2>
+          <p>Turning the phone rotates your view around the anchored menu. The status HUD remains fixed in the same place in each eye.</p>
         </div>
       </div>
       <div class="app-grid">
@@ -85,6 +85,6 @@
     <div class="cursor" aria-hidden="true"><span></span></div>
   </template>
 
-  <script type="module" src="boot-v092.js?v=0.9.2-root"></script>
+  <script type="module" src="boot-v093.js?v=0.9.3-root"></script>
 </body>
 </html>
