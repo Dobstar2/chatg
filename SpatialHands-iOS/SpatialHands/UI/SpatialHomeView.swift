@@ -150,7 +150,7 @@ struct SpatialHomeView: View {
             ),
             in: 0.8...1.6
           )
-          Text(handTracker.cursorGain.formatted(.number.precision(.fractionLength(2))))
+          Text(Double(handTracker.cursorGain).formatted(.number.precision(.fractionLength(2))))
             .font(.caption.monospacedDigit())
             .frame(width: 38, alignment: .trailing)
         }
