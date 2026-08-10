@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm test
-      - name: Syntax check tracking modules
+      - name: Syntax check tracking and UI modules
         run: |
           node --check tracking/filters-v020.js
           node --check tracking/gesture-detector-v020.js
@@ -38,4 +38,6 @@ jobs:
           node --check scene/interaction-manager-v020.js
           node --check scene/interaction-fixes-v020.js
           node --check scene/renderer-controls-patch-v020.js
+          node --check scene/renderer-liquid-v030.js
+          node --check ui/pocket-launch-v030.js
           node --check app-v020.js
