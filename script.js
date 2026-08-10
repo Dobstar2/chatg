@@ -1,5 +1,5 @@
-const BUILD_ID = 'v0.8.2';
-const BUILD_TIME = '10 Aug 2026 17:48 BST';
+const BUILD_ID = 'v0.9.0';
+const BUILD_TIME = '10 Aug 2026 18:01 BST';
 
 const camera = document.getElementById('camera');
 const startScreen = document.getElementById('startScreen');
@@ -27,6 +27,11 @@ const targetStates = worlds.map((world) => world.querySelector('[data-target-sta
 if (buildState) buildState.textContent = `BUILD ${BUILD_ID}`;
 if (startBuild) startBuild.textContent = `BUILD ${BUILD_ID} • ${BUILD_TIME}`;
 document.documentElement.dataset.build = BUILD_ID;
+
+const anchorState = document.createElement('span');
+anchorState.textContent = 'ANCHOR: WORLD';
+anchorState.className = 'build-state';
+document.getElementById('hud')?.appendChild(anchorState);
 
 const isStandalone = () => Boolean(window.navigator.standalone || window.matchMedia?.('(display-mode: standalone)').matches);
 if (installHint) installHint.hidden = isStandalone();
@@ -72,13 +77,19 @@ let hoveredAction = null;
 let lastSelectionAt = 0;
 let lastHitTestAt = 0;
 let overlaySizes = worlds.map(() => ({ width: 1, height: 1, dpr: 1 }));
+let activeApp = null;
+let audioContext = null;
+let mediaGain = null;
+let mediaOscillators = [];
+let mediaPlaying = false;
 
 const trackerPreviews = worlds.map((world, index) => {
   const wrap = document.createElement('div');
   wrap.className = 'tracker-preview-wrap';
   Object.assign(wrap.style, { position:'absolute', zIndex:'18', left:'10px', bottom:'10px', width:'118px', height:'74px', border:'1px solid rgba(116,246,194,.65)', borderRadius:'12px', overflow:'hidden', background:'#000', pointerEvents:'none' });
   const canvas = document.createElement('canvas');
-  canvas.width = 236; canvas.height = 148;
+  canvas.width = 236;
+  canvas.height = 148;
   Object.assign(canvas.style, { width:'100%', height:'100%', display:'block' });
   wrap.appendChild(canvas);
   const label = document.createElement('div');
@@ -87,6 +98,27 @@ const trackerPreviews = worlds.map((world, index) => {
   wrap.appendChild(label);
   world.appendChild(wrap);
   return canvas;
+});
+
+const appPanels = shells.map((shell) => {
+  const panel = document.createElement('div');
+  panel.className = 'spatial-app-panel glass';
+  Object.assign(panel.style, {
+    position:'absolute',
+    zIndex:'40',
+    left:'5%',
+    right:'5%',
+    top:'17%',
+    minHeight:'58%',
+    padding:'16px',
+    borderRadius:'20px',
+    background:'rgba(8,12,20,.97)',
+    border:'1px solid rgba(255,255,255,.18)',
+    display:'none',
+    boxShadow:'0 14px 40px rgba(0,0,0,.38)'
+  });
+  shell.appendChild(panel);
+  return panel;
 });
 
 function setPanel(title, message) {
@@ -101,6 +133,90 @@ function setGestureGuide(state, target = '') {
   targetStates.forEach((node) => { if (node) node.textContent = target; });
 }
 
+function appButton(action, label, subtitle = '') {
+  return `<button data-action="${action}" style="width:100%;min-height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:#171d2a;color:#fff;padding:9px 12px;text-align:left;font-weight:800"><span>${label}</span>${subtitle ? `<small style="display:block;color:#a9b2c8;margin-top:3px">${subtitle}</small>` : ''}</button>`;
+}
+
+function showAppPanel(kind) {
+  activeApp = kind;
+  let html = '';
+
+  if (kind === 'browser') {
+    html = `<div class="eyebrow">SPATIAL BROWSER</div><h2 style="margin:5px 0 10px">Quick destinations</h2><div style="display:grid;gap:8px">${appButton('open-github','GitHub','Open github.com')}${appButton('open-wikipedia','Wikipedia','Open wikipedia.org')}${appButton('open-youtube','YouTube','Open youtube.com')}${appButton('close-app','Close','Return to the anchored menu')}</div>`;
+  } else if (kind === 'media') {
+    html = `<div class="eyebrow">SPATIAL MEDIA</div><h2 style="margin:5px 0 10px">Ambient player</h2><p style="color:#a9b2c8;font-size:11px;line-height:1.4">A lightweight generated ambient tone runs entirely on your phone.</p><div style="display:grid;gap:8px">${appButton('toggle-audio',mediaPlaying?'Pause ambient audio':'Play ambient audio',mediaPlaying?'Audio is playing':'Tap with a pinch to start')}${appButton('close-app','Close','Return to the anchored menu')}</div>`;
+  } else if (kind === 'info') {
+    html = `<div class="eyebrow">SYSTEM INFO</div><h2 style="margin:5px 0 10px">SpatialHands ${BUILD_ID}</h2><div style="color:#a9b2c8;font-size:11px;line-height:1.55">Menu: world anchored<br>Hand input: ${handVisible?'tracking':'searching'}<br>Camera: ${cameraState?.textContent || 'unknown'}<br>Pointer: index fingertip<br>Select: thumb + index pinch</div><div style="margin-top:10px">${appButton('close-app','Close','Return to the anchored menu')}</div>`;
+  }
+
+  appPanels.forEach((panel) => {
+    panel.innerHTML = html;
+    panel.style.display = html ? 'block' : 'none';
+  });
+}
+
+function closeAppPanel() {
+  activeApp = null;
+  appPanels.forEach((panel) => {
+    panel.style.display = 'none';
+    panel.innerHTML = '';
+  });
+}
+
+function initAudio() {
+  try {
+    if (!audioContext) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      audioContext = new Ctx();
+      mediaGain = audioContext.createGain();
+      mediaGain.gain.value = 0;
+      mediaGain.connect(audioContext.destination);
+    }
+    audioContext.resume?.();
+  } catch (_) {}
+}
+
+function toggleAmbientAudio() {
+  initAudio();
+  if (!audioContext || !mediaGain) {
+    setPanel('Media unavailable', 'Audio could not start in this browser session.');
+    return;
+  }
+
+  const now = audioContext.currentTime;
+  if (!mediaPlaying) {
+    mediaOscillators = [174.61, 220, 261.63].map((frequency, index) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = index === 1 ? 'triangle' : 'sine';
+      osc.frequency.value = frequency;
+      gain.gain.value = index === 1 ? 0.18 : 0.1;
+      osc.connect(gain);
+      gain.connect(mediaGain);
+      osc.start();
+      return osc;
+    });
+    mediaGain.gain.cancelScheduledValues(now);
+    mediaGain.gain.setValueAtTime(0, now);
+    mediaGain.gain.linearRampToValueAtTime(0.12, now + 0.35);
+    mediaPlaying = true;
+    setPanel('Media playing', 'Ambient spatial tone started. Pinch Media again to control it.');
+  } else {
+    mediaGain.gain.cancelScheduledValues(now);
+    mediaGain.gain.setValueAtTime(mediaGain.gain.value, now);
+    mediaGain.gain.linearRampToValueAtTime(0, now + 0.2);
+    setTimeout(() => {
+      mediaOscillators.forEach((osc) => { try { osc.stop(); } catch (_) {} });
+      mediaOscillators = [];
+    }, 260);
+    mediaPlaying = false;
+    setPanel('Media paused', 'Ambient audio stopped.');
+  }
+
+  if (activeApp === 'media') showAppPanel('media');
+}
+
 function qNormalize(q) { const length = Math.hypot(q.x,q.y,q.z,q.w)||1; return {x:q.x/length,y:q.y/length,z:q.z/length,w:q.w/length}; }
 function qMultiply(a,b){ return {x:a.w*b.x+a.x*b.w+a.y*b.z-a.z*b.y,y:a.w*b.y-a.x*b.z+a.y*b.w+a.z*b.x,z:a.w*b.z+a.x*b.y-a.y*b.x+a.z*b.w,w:a.w*b.w-a.x*b.x-a.y*b.y-a.z*b.z}; }
 function qConjugate(q){ return {x:-q.x,y:-q.y,z:-q.z,w:q.w}; }
@@ -109,10 +225,10 @@ function qFromEulerYXZ(x,y,z){ const c1=Math.cos(x/2),c2=Math.cos(y/2),c3=Math.c
 function qRotateVector(q,v){ const r=qMultiply(qMultiply(q,{x:v.x,y:v.y,z:v.z,w:0}),qConjugate(q)); return {x:r.x,y:r.y,z:r.z}; }
 function screenAngleDegrees(){ const a=screen.orientation?.angle; if(Number.isFinite(a)) return ((a%360)+360)%360; if(Number.isFinite(window.orientation)) return ((Number(window.orientation)%360)+360)%360; return 0; }
 function deviceQuaternion(alpha,beta,gamma){ const e=qFromEulerYXZ(beta*DEG,alpha*DEG,-gamma*DEG); return qNormalize(qMultiply(qMultiply(e,qAxisAngle(1,0,0,-Math.PI/2)),qAxisAngle(0,0,1,-screenAngleDegrees()*DEG))); }
-function relativePose(base,current){ const r=qNormalize(qMultiply(qConjugate(base),current)); const f=qRotateVector(r,{x:0,y:0,z:-1}),u=qRotateVector(r,{x:0,y:1,z:0}); return {yaw:clamp(Math.atan2(-f.x,-f.z)*RAD,-50,50),pitch:clamp(Math.asin(clamp(f.y,-1,1))*RAD,-38,38),roll:clamp(Math.atan2(u.x,u.y)*RAD,-26,26)}; }
+function relativePose(base,current){ const r=qNormalize(qMultiply(qConjugate(base),current)); const f=qRotateVector(r,{x:0,y:0,z:-1}),u=qRotateVector(r,{x:0,y:1,z:0}); return {yaw:clamp(Math.atan2(-f.x,-f.z)*RAD,-65,65),pitch:clamp(Math.asin(clamp(f.y,-1,1))*RAD,-45,45),roll:clamp(Math.atan2(u.x,u.y)*RAD,-30,30)}; }
 
-function recenter(){ if(currentQuat) baselineQuat={...currentQuat}; targetPose={yaw:0,pitch:0,roll:0}; smoothPose={yaw:0,pitch:0,roll:0}; setPanel('Recentered','Forward is now your current headset direction.'); }
-function onOrientation(event){ const a=Number.isFinite(event.alpha)?event.alpha:0,b=Number.isFinite(event.beta)?event.beta:0,g=Number.isFinite(event.gamma)?event.gamma:0; currentQuat=deviceQuaternion(a,b,g); if(!baselineQuat) baselineQuat={...currentQuat}; const p=relativePose(baselineQuat,currentQuat); targetPose.yaw=Math.abs(p.yaw)<.12?0:p.yaw; targetPose.pitch=Math.abs(p.pitch)<.12?0:p.pitch; targetPose.roll=Math.abs(p.roll)<.18?0:p.roll; if(!motionEnabled){ motionEnabled=true; motionState.textContent='HEAD: LIVE'; } }
+function recenter(){ if(currentQuat) baselineQuat={...currentQuat}; targetPose={yaw:0,pitch:0,roll:0}; smoothPose={yaw:0,pitch:0,roll:0}; closeAppPanel(); anchorState.textContent='ANCHOR: WORLD'; setPanel('World anchor reset','The menu is fixed at this direction. Turn your head and it will stay behind in space.'); }
+function onOrientation(event){ const a=Number.isFinite(event.alpha)?event.alpha:0,b=Number.isFinite(event.beta)?event.beta:0,g=Number.isFinite(event.gamma)?event.gamma:0; currentQuat=deviceQuaternion(a,b,g); if(!baselineQuat) baselineQuat={...currentQuat}; const p=relativePose(baselineQuat,currentQuat); targetPose.yaw=Math.abs(p.yaw)<.08?0:p.yaw; targetPose.pitch=Math.abs(p.pitch)<.08?0:p.pitch; targetPose.roll=Math.abs(p.roll)<.14?0:p.roll; if(!motionEnabled){ motionEnabled=true; motionState.textContent='HEAD: LIVE'; } }
 async function enableMotion(){ try{ const requests=[]; if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function') requests.push(DeviceMotionEvent.requestPermission()); if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function') requests.push(DeviceOrientationEvent.requestPermission()); const results=await Promise.all(requests); if(results.some((r)=>r!=='granted')) throw new Error('Motion and orientation permission are required.'); window.addEventListener('deviceorientation',onOrientation,{capture:true,passive:true}); motionState.textContent='HEAD: READY'; }catch(error){ motionState.textContent='HEAD: BLOCKED'; setPanel('Head tracking unavailable',error.message||'Motion access is blocked.'); } }
 
 function cameraScore(device){ const label=(device.label||'').toLowerCase(); if(/front|user|facetime|selfie/.test(label)) return -1000; let score=0; const ultra=/ultra[ -]?wide|0\.5|0,5/.test(label),tele=/tele|telephoto/.test(label); if(/back|rear|environment/.test(label)) score+=220; if(!ultra&&/wide|main|camera/.test(label)) score+=160; if(ultra) score-=120; if(tele) score-=160; return score; }
@@ -138,13 +254,103 @@ function drawHand(canvas,size,alpha){ const ctx=canvas.getContext('2d'); ctx.set
 function drawTrackerPreview(){ if(!stream||camera.readyState<2||camera.videoWidth<2) return; trackerPreviews.forEach((canvas)=>{ const ctx=canvas.getContext('2d'),cw=canvas.width,ch=canvas.height,vw=camera.videoWidth,vh=camera.videoHeight,scale=Math.max(cw/vw,ch/vh),dw=vw*scale,dh=vh*scale,dx=(cw-dw)/2,dy=(ch-dh)/2; ctx.clearRect(0,0,cw,ch); ctx.drawImage(camera,dx,dy,dw,dh); ctx.strokeStyle=handVisible?'#74f6c2':'#ffd68b'; ctx.lineWidth=5; ctx.strokeRect(2.5,2.5,cw-5,ch-5); }); }
 
 function buttonUnderLeftCursor(){ if(!handVisible||!cursors[0]) return null; const rect=cursors[0].getBoundingClientRect(),x=rect.left+rect.width/2,y=rect.top+rect.height/2,element=document.elementFromPoint(x,y); return element?.closest?.('button[data-action]')||null; }
-function updateInteraction(now){ if(now-lastHitTestAt<32) return; lastHitTestAt=now; const target=buttonUnderLeftCursor(),nextAction=target?.dataset.action||null; if(nextAction!==hoveredAction){ hoveredAction=nextAction; worlds.forEach((world)=>world.querySelectorAll('button[data-action]').forEach((button)=>button.classList.toggle('hovered',Boolean(nextAction&&button.dataset.action===nextAction)))); } if(!handVisible) setGestureGuide('PUT HAND IN TRACKER VIEW','Palm toward camera · move closer'); else if(pinchDown) setGestureGuide('✓ PINCH DETECTED',target?`CLICK ${target.textContent.trim()}`:'Move ring onto a tile'); else if(target) setGestureGuide('👌 PINCH TO CLICK',target.textContent.trim()); else setGestureGuide('☝ INDEX CONTROLS RING','Move green ring onto a tile'); }
-function triggerAction(action){ const now=performance.now(); if(now-lastSelectionAt<350) return; lastSelectionAt=now; if(navigator.vibrate) navigator.vibrate(18); switch(action){ case'passthrough':passthrough=!passthrough;document.body.classList.toggle('passthrough',passthrough);setPanel('Passthrough',passthrough?'Rear camera view enabled.':'Virtual background restored.');break; case'settings':mirrorHand=!mirrorHand;setPanel('Hand direction',mirrorHand?'Pointer direction flipped.':'Pointer direction follows camera view.');break; case'recenter':recenter();break; case'browser':setPanel('Browser','Browser surface selected.');break; case'media':setPanel('Media','Media surface selected.');break; case'info':setPanel('SpatialHands VR',`Build ${BUILD_ID}. Green ring = index fingertip. Thumb + index pinch = click.`);break; default:setPanel('Home','Use your index fingertip to move the green ring. Pinch thumb + index to click.'); } }
+function updateInteraction(now){ if(now-lastHitTestAt<32) return; lastHitTestAt=now; const target=buttonUnderLeftCursor(),nextAction=target?.dataset.action||null; if(nextAction!==hoveredAction){ hoveredAction=nextAction; worlds.forEach((world)=>world.querySelectorAll('button[data-action]').forEach((button)=>button.classList.toggle('hovered',Boolean(nextAction&&button.dataset.action===nextAction)))); } if(!handVisible) setGestureGuide('PUT HAND IN TRACKER VIEW','Palm toward camera · move closer'); else if(pinchDown) setGestureGuide('✓ PINCH DETECTED',target?`CLICK ${target.textContent.trim()}`:'Move ring onto a button'); else if(target) setGestureGuide('👌 PINCH TO CLICK',target.textContent.trim()); else setGestureGuide('☝ INDEX CONTROLS RING','Move green ring onto a button'); }
 
-function renderFrame(now){ if(!renderLoopActive) return; const dt=clamp(lastFrameAt?now-lastFrameAt:16.7,7,40); lastFrameAt=now; if(motionEnabled&&baselineQuat){ const h=expSmoothing(dt,20); smoothPose.yaw+=(targetPose.yaw-smoothPose.yaw)*h; smoothPose.pitch+=(targetPose.pitch-smoothPose.pitch)*h; smoothPose.roll+=(targetPose.roll-smoothPose.roll)*h; shells.forEach((shell,index)=>{ const eyeOffset=index===0?4:-4,tx=(-smoothPose.yaw*3.25)+eyeOffset,ty=smoothPose.pitch*2.1; shell.style.transform=`translate3d(calc(-50% + ${tx.toFixed(2)}px), calc(-50% + ${ty.toFixed(2)}px), 0) rotateZ(${(-smoothPose.roll*.08).toFixed(2)}deg) rotateY(${(smoothPose.yaw*.16).toFixed(2)}deg) rotateX(${(-smoothPose.pitch*.11).toFixed(2)}deg)`; }); if(lookState){ const horizontal=smoothPose.yaw>1?'RIGHT':smoothPose.yaw<-1?'LEFT':'CENTER',vertical=smoothPose.pitch>1?'UP':smoothPose.pitch<-1?'DOWN':''; lookState.textContent=`LOOK: ${horizontal}${vertical?` + ${vertical}`:''}`; } } if(targetHand&&smoothHand){ const a=expSmoothing(dt,42); for(let i=0;i<smoothHand.length;i++){ smoothHand[i].x+=(targetHand[i].x-smoothHand[i].x)*a; smoothHand[i].y+=(targetHand[i].y-smoothHand[i].y)*a; } } handOpacity+=((handVisible?1:0)-handOpacity)*expSmoothing(dt,handVisible?50:100); const age=lastPointerSampleAt?Math.min(now-lastPointerSampleAt,70):0,predicted={x:clamp(targetPointer.x+pointerVelocity.x*age,.02,.98),y:clamp(targetPointer.y+pointerVelocity.y*age,.02,.98)},p=expSmoothing(dt,28); smoothPointer.x+=(predicted.x-smoothPointer.x)*p; smoothPointer.y+=(predicted.y-smoothPointer.y)*p; worlds.forEach((world,index)=>{ const size=overlaySizes[index],cursor=cursors[index],px=smoothPointer.x*size.width,py=smoothPointer.y*size.height; cursor.style.transform=`translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0) translate(-50%, -50%)`; cursor.style.opacity=handVisible?'1':'.18'; cursor.classList.toggle('pinching',pinchDown); cursor.classList.toggle('targeted',Boolean(hoveredAction)); drawHand(handCanvases[index],size,handOpacity); }); updateInteraction(now); requestAnimationFrame(renderFrame); }
+function triggerAction(action){
+  const now=performance.now();
+  if(now-lastSelectionAt<350) return;
+  lastSelectionAt=now;
+  if(navigator.vibrate) navigator.vibrate(18);
+
+  switch(action){
+    case 'browser': showAppPanel('browser'); setPanel('Browser opened','Choose a destination with your hand.'); break;
+    case 'media': showAppPanel('media'); setPanel('Media opened','Play or pause the generated ambient audio.'); break;
+    case 'passthrough': passthrough=!passthrough; document.body.classList.toggle('passthrough',passthrough); setPanel('Passthrough',passthrough?'Rear camera view enabled behind the anchored menu.':'Virtual background restored.'); break;
+    case 'settings': mirrorHand=!mirrorHand; setPanel('Hand direction',mirrorHand?'Pointer direction flipped.':'Pointer direction follows camera view.'); break;
+    case 'recenter': recenter(); break;
+    case 'info': showAppPanel('info'); break;
+    case 'home': closeAppPanel(); setPanel('Home','The menu remains anchored in world space.'); break;
+    case 'close-app': closeAppPanel(); setPanel('Home','Returned to the anchored menu.'); break;
+    case 'toggle-audio': toggleAmbientAudio(); break;
+    case 'open-github': location.assign('https://github.com/'); break;
+    case 'open-wikipedia': location.assign('https://www.wikipedia.org/'); break;
+    case 'open-youtube': location.assign('https://www.youtube.com/'); break;
+    default: setPanel('Selected',action); break;
+  }
+}
+
+function renderFrame(now){
+  if(!renderLoopActive) return;
+  const dt=clamp(lastFrameAt?now-lastFrameAt:16.7,7,40);
+  lastFrameAt=now;
+
+  if(motionEnabled&&baselineQuat){
+    const h=expSmoothing(dt,18);
+    smoothPose.yaw+=(targetPose.yaw-smoothPose.yaw)*h;
+    smoothPose.pitch+=(targetPose.pitch-smoothPose.pitch)*h;
+    smoothPose.roll+=(targetPose.roll-smoothPose.roll)*h;
+
+    shells.forEach((shell,index)=>{
+      const eye=worlds[index];
+      const eyeWidth=Math.max(1,eye.clientWidth);
+      const eyeHeight=Math.max(1,eye.clientHeight);
+      const focalX=eyeWidth/2/Math.tan(42*DEG);
+      const focalY=eyeHeight/2/Math.tan(34*DEG);
+      const yawRad=smoothPose.yaw*DEG;
+      const pitchRad=smoothPose.pitch*DEG;
+      const eyeOffset=index===0?4:-4;
+      const tx=clamp(-Math.tan(yawRad)*focalX,-eyeWidth*1.7,eyeWidth*1.7)+eyeOffset;
+      const ty=clamp(Math.tan(pitchRad)*focalY,-eyeHeight*1.5,eyeHeight*1.5);
+      const facingScale=clamp(Math.cos(yawRad)*Math.cos(pitchRad),.72,1);
+      shell.style.transform=`translate3d(calc(-50% + ${tx.toFixed(2)}px), calc(-50% + ${ty.toFixed(2)}px), 0) scale(${facingScale.toFixed(3)}) rotateZ(${(-smoothPose.roll*.035).toFixed(2)}deg)`;
+    });
+
+    if(lookState){
+      const horizontal=smoothPose.yaw>1?'RIGHT':smoothPose.yaw<-1?'LEFT':'CENTER';
+      const vertical=smoothPose.pitch>1?'UP':smoothPose.pitch<-1?'DOWN':'';
+      lookState.textContent=`LOOK: ${horizontal}${vertical?` + ${vertical}`:''}`;
+    }
+  }
+
+  if(targetHand&&smoothHand){
+    const a=expSmoothing(dt,42);
+    for(let i=0;i<smoothHand.length;i++){
+      smoothHand[i].x+=(targetHand[i].x-smoothHand[i].x)*a;
+      smoothHand[i].y+=(targetHand[i].y-smoothHand[i].y)*a;
+    }
+  }
+
+  handOpacity+=((handVisible?1:0)-handOpacity)*expSmoothing(dt,handVisible?50:100);
+  const age=lastPointerSampleAt?Math.min(now-lastPointerSampleAt,70):0;
+  const predicted={x:clamp(targetPointer.x+pointerVelocity.x*age,.02,.98),y:clamp(targetPointer.y+pointerVelocity.y*age,.02,.98)};
+  const p=expSmoothing(dt,28);
+  smoothPointer.x+=(predicted.x-smoothPointer.x)*p;
+  smoothPointer.y+=(predicted.y-smoothPointer.y)*p;
+
+  worlds.forEach((world,index)=>{
+    const size=overlaySizes[index],cursor=cursors[index],px=smoothPointer.x*size.width,py=smoothPointer.y*size.height;
+    cursor.style.transform=`translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0) translate(-50%, -50%)`;
+    cursor.style.opacity=handVisible?'1':'.18';
+    cursor.classList.toggle('pinching',pinchDown);
+    cursor.classList.toggle('targeted',Boolean(hoveredAction));
+    drawHand(handCanvases[index],size,handOpacity);
+  });
+
+  updateInteraction(now);
+  requestAnimationFrame(renderFrame);
+}
 
 async function requestImmersiveMode(){ try{ if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({navigationUI:'hide'}); }catch(_){} try{ if(screen.orientation?.lock) await screen.orientation.lock('landscape'); }catch(_){} }
-async function startVR(){ startButton.disabled=true; startStatus.textContent=`Starting ${BUILD_ID}…`; await enableMotion(); const cameraOkay=await enableCamera(); if(cameraOkay) await enableHandTracking(); await requestImmersiveMode(); startScreen.classList.add('hidden'); requestAnimationFrame(()=>{resizeOverlays();recenter();}); setPanel(cameraOkay?'Tracking camera ready':'Head tracking active',cameraOkay?'Look at the TRACKER VIEW box. Put your palm in that camera view, then use your index fingertip as the pointer.':'Rear camera unavailable, so hand control is disabled.'); }
-startButton.addEventListener('click',startVR); recenterButton.addEventListener('click',recenter); worlds.forEach((world)=>world.addEventListener('click',(event)=>{const button=event.target.closest('button[data-action]');if(button)triggerAction(button.dataset.action);})); window.addEventListener('resize',()=>requestAnimationFrame(resizeOverlays),{passive:true}); window.addEventListener('orientationchange',()=>setTimeout(()=>{resizeOverlays();if(currentQuat)recenter();},220),{passive:true}); document.addEventListener('visibilitychange',()=>{if(!document.hidden&&handTrackingActive)scheduleHandFrame(40);}); window.addEventListener('pagehide',()=>{renderLoopActive=false;handTrackingActive=false;clearTimeout(handTimer);clearInterval(drawTrackerPreview.timer);stream?.getTracks().forEach((track)=>track.stop());});
+async function startVR(){ startButton.disabled=true; startStatus.textContent=`Starting ${BUILD_ID}…`; initAudio(); await enableMotion(); const cameraOkay=await enableCamera(); if(cameraOkay) await enableHandTracking(); await requestImmersiveMode(); startScreen.classList.add('hidden'); requestAnimationFrame(()=>{resizeOverlays();recenter();}); setPanel(cameraOkay?'World anchor ready':'Head tracking active',cameraOkay?'Menu is anchored in space. Point with your index finger and pinch to press buttons.':'Rear camera unavailable, so hand control is disabled.'); }
 
-resizeOverlays(); drawTrackerPreview.timer=setInterval(drawTrackerPreview,120); requestAnimationFrame(renderFrame);
+startButton.addEventListener('click',startVR);
+recenterButton.addEventListener('click',recenter);
+worlds.forEach((world)=>world.addEventListener('click',(event)=>{const button=event.target.closest('button[data-action]');if(button)triggerAction(button.dataset.action);}));
+window.addEventListener('resize',()=>requestAnimationFrame(resizeOverlays),{passive:true});
+window.addEventListener('orientationchange',()=>setTimeout(()=>{resizeOverlays();},220),{passive:true});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&handTrackingActive)scheduleHandFrame(40);});
+window.addEventListener('pagehide',()=>{renderLoopActive=false;handTrackingActive=false;clearTimeout(handTimer);clearInterval(drawTrackerPreview.timer);stream?.getTracks().forEach((track)=>track.stop());mediaOscillators.forEach((osc)=>{try{osc.stop();}catch(_){}});});
+
+resizeOverlays();
+drawTrackerPreview.timer=setInterval(drawTrackerPreview,120);
+requestAnimationFrame(renderFrame);
