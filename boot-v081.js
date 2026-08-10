@@ -1,6 +1,6 @@
-import './script.js?v=0.8.1-core';
+import './script.js?v=0.8.2-handfix';
 
-const BUILD = 'v0.8.1';
+const BUILD = 'v0.8.2';
 
 function stampBuild() {
   const buildState = document.getElementById('buildState');
