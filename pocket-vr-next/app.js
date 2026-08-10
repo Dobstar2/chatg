@@ -5,7 +5,7 @@ import { HandTrackingManager } from './tracking/hand-tracking.js';
 import { InteractionManager } from './scene/interaction-manager.js';
 import { StereoRenderer } from './scene/stereo-renderer.js';
 
-const BUILD = 'tracking-foundation-0.1.0';
+const BUILD = 'tracking-foundation-0.1.1';
 
 class PocketVRApp {
   constructor() {
@@ -34,8 +34,10 @@ class PocketVRApp {
     this.lastHandCount = -1;
 
     this._frame = this._frame.bind(this);
+    this._syncViewportHeight = this._syncViewportHeight.bind(this);
     this._bindEvents();
     this._stampBuild();
+    this._syncViewportHeight();
     requestAnimationFrame(this._frame);
   }
 
@@ -43,6 +45,16 @@ class PocketVRApp {
     this.enterButton.addEventListener('click', () => this.enter());
     this.touchRecenter.addEventListener('click', () => this.recenterHead());
     this.touchCalibrate.addEventListener('click', () => this.recalibrateHands());
+
+    window.addEventListener('resize', this._syncViewportHeight, { passive: true });
+    window.addEventListener('orientationchange', () => {
+      setTimeout(this._syncViewportHeight, 80);
+      setTimeout(this._syncViewportHeight, 350);
+    }, { passive: true });
+    window.visualViewport?.addEventListener('resize', this._syncViewportHeight, { passive: true });
+    window.visualViewport?.addEventListener('scroll', this._syncViewportHeight, { passive: true });
+    document.addEventListener('fullscreenchange', this._syncViewportHeight);
+    document.addEventListener('webkitfullscreenchange', this._syncViewportHeight);
 
     this.camera.addEventListener('status', (event) => {
       const labels = {
@@ -161,6 +173,7 @@ class PocketVRApp {
     this.startOverlay.classList.add('hidden');
     document.body.classList.add('running');
     this.statusText = 'READY';
+    this._syncViewportHeight();
 
     setTimeout(() => this.head.recenter(), 450);
     setTimeout(() => {
@@ -266,12 +279,18 @@ class PocketVRApp {
     document.documentElement.dataset.build = BUILD;
   }
 
+  _syncViewportHeight() {
+    const height = Math.round(window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight);
+    if (height > 0) document.documentElement.style.setProperty('--app-height', `${height}px`);
+  }
+
   _requestImmersiveMode() {
+    const root = document.documentElement;
     try {
-      const fullscreen = document.documentElement.requestFullscreen?.({ navigationUI: 'hide' });
+      const fullscreen = root.requestFullscreen?.({ navigationUI: 'hide' }) || root.webkitRequestFullscreen?.();
       fullscreen?.catch?.(() => {});
     } catch (_) {
-      // Safari may not expose fullscreen for ordinary web pages.
+      // iPhone Safari may not expose the Fullscreen API for ordinary pages.
     }
     try {
       const orientation = screen.orientation?.lock?.('landscape');
@@ -279,6 +298,9 @@ class PocketVRApp {
     } catch (_) {
       // iPhone Safari may ignore orientation locking outside standalone mode.
     }
+    this._syncViewportHeight();
+    setTimeout(this._syncViewportHeight, 120);
+    setTimeout(this._syncViewportHeight, 500);
   }
 }
 
