@@ -101,7 +101,7 @@ button { font: inherit; color: inherit; }
 .dock button { width: 29px; height: 29px; border-radius: 11px; border: 0; background: transparent; font-weight: 900; }
 .panel { margin-top: 6px; padding: 7px 10px; border-radius: 13px; font-size: 8px; display: flex; gap: 6px; }
 .panel span { color: var(--muted); }
-.cursor { position: absolute; left: 50%; top: 50%; width: 32px; height: 32px; border: 2px solid rgba(255,255,255,.98); border-radius: 50%; transform: translate3d(-50%, -50%, 0); pointer-events: none; z-index: 20; will-change: left, top; }
+.cursor { position: absolute; left: 0; top: 0; width: 32px; height: 32px; border: 2px solid rgba(255,255,255,.98); border-radius: 50%; transform: translate3d(0, 0, 0) translate(-50%, -50%); pointer-events: none; z-index: 20; will-change: transform; backface-visibility: hidden; }
 .cursor span { position: absolute; width: 5px; height: 5px; left: 50%; top: 50%; transform: translate(-50%,-50%); background: #fff; border-radius: 50%; }
 .cursor.targeted { border-color: var(--good); box-shadow: 0 0 0 4px rgba(116,246,194,.16); }
 .cursor.pinching { width: 22px; height: 22px; border-width: 4px; border-color: var(--good); background: rgba(116,246,194,.18); }
