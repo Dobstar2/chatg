@@ -1,0 +1,10 @@
+{
+  "name": "Pocket VR Tracking Foundation",
+  "short_name": "Pocket VR Next",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#010308",
+  "theme_color": "#030711"
+}
