@@ -5,13 +5,16 @@ import { HandTrackingManager } from './tracking/hand-tracking.js';
 import { InteractionManager } from './scene/interaction-manager.js';
 import { StereoRenderer } from './scene/stereo-renderer.js';
 
-const BUILD = 'tracking-foundation-0.1.1';
+const BUILD = 'tracking-foundation-0.1.2';
 
 class PocketVRApp {
   constructor() {
     this.video = document.getElementById('trackingVideo');
     this.leftCanvas = document.getElementById('leftEyeCanvas');
     this.rightCanvas = document.getElementById('rightEyeCanvas');
+    this.stereoRoot = document.getElementById('stereoRoot');
+    this.eyes = [...document.querySelectorAll('#stereoRoot > .eye')];
+    this.divider = document.querySelector('#stereoRoot > .divider');
     this.startOverlay = document.getElementById('startOverlay');
     this.enterButton = document.getElementById('enterButton');
     this.startStatus = document.getElementById('startStatus');
@@ -34,10 +37,10 @@ class PocketVRApp {
     this.lastHandCount = -1;
 
     this._frame = this._frame.bind(this);
-    this._syncViewportHeight = this._syncViewportHeight.bind(this);
+    this._syncViewportGeometry = this._syncViewportGeometry.bind(this);
     this._bindEvents();
     this._stampBuild();
-    this._syncViewportHeight();
+    this._syncViewportGeometry();
     requestAnimationFrame(this._frame);
   }
 
@@ -46,15 +49,16 @@ class PocketVRApp {
     this.touchRecenter.addEventListener('click', () => this.recenterHead());
     this.touchCalibrate.addEventListener('click', () => this.recalibrateHands());
 
-    window.addEventListener('resize', this._syncViewportHeight, { passive: true });
+    window.addEventListener('resize', this._syncViewportGeometry, { passive: true });
     window.addEventListener('orientationchange', () => {
-      setTimeout(this._syncViewportHeight, 80);
-      setTimeout(this._syncViewportHeight, 350);
+      setTimeout(this._syncViewportGeometry, 60);
+      setTimeout(this._syncViewportGeometry, 220);
+      setTimeout(this._syncViewportGeometry, 600);
     }, { passive: true });
-    window.visualViewport?.addEventListener('resize', this._syncViewportHeight, { passive: true });
-    window.visualViewport?.addEventListener('scroll', this._syncViewportHeight, { passive: true });
-    document.addEventListener('fullscreenchange', this._syncViewportHeight);
-    document.addEventListener('webkitfullscreenchange', this._syncViewportHeight);
+    window.visualViewport?.addEventListener('resize', this._syncViewportGeometry, { passive: true });
+    window.visualViewport?.addEventListener('scroll', this._syncViewportGeometry, { passive: true });
+    document.addEventListener('fullscreenchange', this._syncViewportGeometry);
+    document.addEventListener('webkitfullscreenchange', this._syncViewportGeometry);
 
     this.camera.addEventListener('status', (event) => {
       const labels = {
@@ -116,7 +120,10 @@ class PocketVRApp {
     window.addEventListener('pagehide', () => this.stop());
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) this.statusText = 'PAUSED';
-      else if (this.running) this.statusText = 'READY';
+      else if (this.running) {
+        this.statusText = 'READY';
+        this._syncViewportGeometry();
+      }
     });
   }
 
@@ -173,7 +180,10 @@ class PocketVRApp {
     this.startOverlay.classList.add('hidden');
     document.body.classList.add('running');
     this.statusText = 'READY';
-    this._syncViewportHeight();
+    this._syncViewportGeometry();
+    requestAnimationFrame(this._syncViewportGeometry);
+    setTimeout(this._syncViewportGeometry, 120);
+    setTimeout(this._syncViewportGeometry, 450);
 
     setTimeout(() => this.head.recenter(), 450);
     setTimeout(() => {
@@ -279,9 +289,56 @@ class PocketVRApp {
     document.documentElement.dataset.build = BUILD;
   }
 
-  _syncViewportHeight() {
-    const height = Math.round(window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight);
-    if (height > 0) document.documentElement.style.setProperty('--app-height', `${height}px`);
+  _syncViewportGeometry() {
+    const viewport = window.visualViewport;
+    const width = Math.round(viewport?.width || window.innerWidth || document.documentElement.clientWidth || 1);
+    const height = Math.round(viewport?.height || window.innerHeight || document.documentElement.clientHeight || 1);
+    const left = Math.round(viewport?.offsetLeft || 0);
+    const top = Math.round(viewport?.offsetTop || 0);
+    const eyeWidth = width / 2;
+
+    document.documentElement.style.setProperty('--app-height', `${height}px`);
+    document.documentElement.style.setProperty('--app-width', `${width}px`);
+
+    if (this.stereoRoot) {
+      Object.assign(this.stereoRoot.style, {
+        position: 'fixed',
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${width}px`,
+        height: `${height}px`,
+        display: 'block',
+        overflow: 'hidden',
+      });
+    }
+
+    this.eyes.forEach((eye, index) => {
+      Object.assign(eye.style, {
+        position: 'absolute',
+        top: '0px',
+        left: index === 0 ? '0px' : `${eyeWidth}px`,
+        width: `${eyeWidth}px`,
+        height: `${height}px`,
+        minWidth: '0px',
+        minHeight: '0px',
+        overflow: 'hidden',
+      });
+    });
+
+    if (this.divider) {
+      Object.assign(this.divider.style, {
+        position: 'absolute',
+        left: `${eyeWidth}px`,
+        top: '0px',
+        bottom: 'auto',
+        width: '2px',
+        height: `${height}px`,
+        transform: 'translateX(-1px)',
+      });
+    }
+
+    // Resize both backing canvases after the containers have their final equal dimensions.
+    requestAnimationFrame(() => this.renderer.resize());
   }
 
   _requestImmersiveMode() {
@@ -298,9 +355,9 @@ class PocketVRApp {
     } catch (_) {
       // iPhone Safari may ignore orientation locking outside standalone mode.
     }
-    this._syncViewportHeight();
-    setTimeout(this._syncViewportHeight, 120);
-    setTimeout(this._syncViewportHeight, 500);
+    this._syncViewportGeometry();
+    setTimeout(this._syncViewportGeometry, 120);
+    setTimeout(this._syncViewportGeometry, 500);
   }
 }
 
