@@ -32,5 +32,8 @@ jobs:
           node --check tracking/filters-v020.js
           node --check tracking/gesture-detector-v020.js
           node --check tracking/hand-tracking-v020.js
+          node --check tracking/mediapipe-runtime-v020.js
           node --check scene/interaction-manager-v020.js
+          node --check scene/interaction-fixes-v020.js
+          node --check scene/renderer-controls-patch-v020.js
           node --check app-v020.js
