@@ -1,0 +1,393 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 60;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B10000000000000000000001 /* SpatialHandsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000000000000000000001 /* SpatialHandsApp.swift */; };
+		B10000000000000000000002 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000000000000000000002 /* CameraPreviewView.swift */; };
+		B10000000000000000000003 /* HandTrackingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000000000000000000003 /* HandTrackingController.swift */; };
+		B10000000000000000000004 /* HandGestureMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000000000000000000004 /* HandGestureMath.swift */; };
+		B10000000000000000000005 /* SpatialHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000000000000000000005 /* SpatialHomeView.swift */; };
+		B10000000000000000000006 /* HandGestureMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000000000000000000006 /* HandGestureMathTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D10000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A10000000000000000000001;
+			remoteInfo = SpatialHands;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		C00000000000000000000001 /* SpatialHands.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpatialHands.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C00000000000000000000002 /* SpatialHandsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpatialHandsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C10000000000000000000001 /* SpatialHandsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpatialHandsApp.swift; sourceTree = "<group>"; };
+		C10000000000000000000002 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
+		C10000000000000000000003 /* HandTrackingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandTrackingController.swift; sourceTree = "<group>"; };
+		C10000000000000000000004 /* HandGestureMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandGestureMath.swift; sourceTree = "<group>"; };
+		C10000000000000000000005 /* SpatialHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpatialHomeView.swift; sourceTree = "<group>"; };
+		C10000000000000000000006 /* HandGestureMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandGestureMathTests.swift; sourceTree = "<group>"; };
+		C10000000000000000000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E10000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E10000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		F00000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				F10000000000000000000001 /* SpatialHands */,
+				F10000000000000000000005 /* SpatialHandsTests */,
+				F10000000000000000000006 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F10000000000000000000001 /* SpatialHands */ = {
+			isa = PBXGroup;
+			children = (
+				C10000000000000000000001 /* SpatialHandsApp.swift */,
+				F10000000000000000000002 /* Camera */,
+				F10000000000000000000003 /* Interaction */,
+				F10000000000000000000004 /* UI */,
+				C10000000000000000000007 /* Info.plist */,
+			);
+			path = SpatialHands;
+			sourceTree = "<group>";
+		};
+		F10000000000000000000002 /* Camera */ = {
+			isa = PBXGroup;
+			children = (
+				C10000000000000000000002 /* CameraPreviewView.swift */,
+				C10000000000000000000003 /* HandTrackingController.swift */,
+			);
+			path = Camera;
+			sourceTree = "<group>";
+		};
+		F10000000000000000000003 /* Interaction */ = {
+			isa = PBXGroup;
+			children = (
+				C10000000000000000000004 /* HandGestureMath.swift */,
+			);
+			path = Interaction;
+			sourceTree = "<group>";
+		};
+		F10000000000000000000004 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				C10000000000000000000005 /* SpatialHomeView.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		F10000000000000000000005 /* SpatialHandsTests */ = {
+			isa = PBXGroup;
+			children = (
+				C10000000000000000000006 /* HandGestureMathTests.swift */,
+			);
+			path = SpatialHandsTests;
+			sourceTree = "<group>";
+		};
+		F10000000000000000000006 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000001 /* SpatialHands.app */,
+				C00000000000000000000002 /* SpatialHandsTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A10000000000000000000001 /* SpatialHands */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A30000000000000000000002 /* Build configuration list for PBXNativeTarget "SpatialHands" */;
+			buildPhases = (
+				E20000000000000000000001 /* Sources */,
+				E10000000000000000000001 /* Frameworks */,
+				E30000000000000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SpatialHands;
+			productName = SpatialHands;
+			productReference = C00000000000000000000001 /* SpatialHands.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A10000000000000000000002 /* SpatialHandsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A30000000000000000000003 /* Build configuration list for PBXNativeTarget "SpatialHandsTests" */;
+			buildPhases = (
+				E20000000000000000000002 /* Sources */,
+				E10000000000000000000002 /* Frameworks */,
+				E30000000000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D20000000000000000000001 /* PBXTargetDependency */,
+			);
+			name = SpatialHandsTests;
+			productName = SpatialHandsTests;
+			productReference = C00000000000000000000002 /* SpatialHandsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A00000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A10000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					A10000000000000000000002 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = A10000000000000000000001;
+					};
+				};
+			};
+			buildConfigurationList = A30000000000000000000001 /* Build configuration list for PBXProject "SpatialHands" */;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = F00000000000000000000001;
+			productRefGroup = F10000000000000000000006 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A10000000000000000000001 /* SpatialHands */,
+				A10000000000000000000002 /* SpatialHandsTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E30000000000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E30000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E20000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000000000000000000001 /* SpatialHandsApp.swift in Sources */,
+				B10000000000000000000002 /* CameraPreviewView.swift in Sources */,
+				B10000000000000000000003 /* HandTrackingController.swift in Sources */,
+				B10000000000000000000004 /* HandGestureMath.swift in Sources */,
+				B10000000000000000000005 /* SpatialHomeView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E20000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000000000000000000006 /* HandGestureMathTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D20000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A10000000000000000000001 /* SpatialHands */;
+			targetProxy = D10000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A20000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A20000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A20000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SpatialHands/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dobstar.spatialhands;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A20000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SpatialHands/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dobstar.spatialhands;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		A20000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dobstar.spatialhands.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SpatialHands.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SpatialHands";
+			};
+			name = Debug;
+		};
+		A20000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dobstar.spatialhands.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SpatialHands.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SpatialHands";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A30000000000000000000001 /* Build configuration list for PBXProject "SpatialHands" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A20000000000000000000001 /* Debug */,
+				A20000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A30000000000000000000002 /* Build configuration list for PBXNativeTarget "SpatialHands" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A20000000000000000000003 /* Debug */,
+				A20000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A30000000000000000000003 /* Build configuration list for PBXNativeTarget "SpatialHandsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A20000000000000000000005 /* Debug */,
+				A20000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A00000000000000000000001 /* Project object */;
+}
