@@ -3,42 +3,95 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#080b12" />
+  <meta name="theme-color" content="#07090f" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Pocket Spatial" />
-  <link rel="manifest" href="./manifest.webmanifest?v=040-bootstrap-e" />
-  <link rel="icon" href="./pocket-icon-v040.svg" type="image/svg+xml" />
-  <title>Pocket Spatial 0.4 · Safari Fix E</title>
-  <style>
-    :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:#060810;color:#f7f9ff}
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#060810}
-    body{display:grid;place-items:center;padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));background:radial-gradient(circle at 50% 16%,rgba(125,191,255,.25),transparent 30%),radial-gradient(circle at 82% 82%,rgba(159,130,255,.13),transparent 31%),linear-gradient(180deg,#101722,#070911 62%,#05070b)}
-    main{width:min(100%,430px);display:grid;gap:22px;text-align:center}
-    .orb{width:min(58vw,230px);aspect-ratio:1;margin:auto;border-radius:50%;background:radial-gradient(circle at 34% 27%,rgba(255,255,255,.85),transparent 9%),radial-gradient(circle at 42% 36%,rgba(132,205,255,.75),rgba(91,110,219,.46) 36%,rgba(11,17,35,.2) 68%,transparent 76%),linear-gradient(145deg,rgba(104,199,239,.75),rgba(116,95,211,.68));box-shadow:0 44px 90px rgba(28,53,111,.35),inset -22px -30px 54px rgba(16,16,42,.43),inset 12px 12px 30px rgba(255,255,255,.2);animation:float 5.8s ease-in-out infinite}
-    @keyframes float{50%{transform:translateY(-5px) scale(1.01)}}
-    .chip{justify-self:center;padding:7px 11px;border:1px solid rgba(116,246,194,.34);border-radius:999px;background:rgba(23,66,55,.48);font-size:10px;font-weight:900;color:#74f6c2;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
-    h1{margin:0;font-size:clamp(36px,11vw,52px);line-height:.96;letter-spacing:-.06em}
-    p{margin:0;color:rgba(238,244,255,.64);font-size:14px;line-height:1.45}
-    .progress{--progress:0%;height:7px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
-    .progress::after{content:"";display:block;width:var(--progress);height:100%;border-radius:inherit;background:linear-gradient(90deg,#8bcfff,#aaa7ff);transition:width .28s cubic-bezier(.2,.8,.2,1)}
-    button{min-height:48px;border:1px solid rgba(255,255,255,.28);border-radius:18px;background:rgba(247,250,255,.94);color:#08111e;font:800 15px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;padding:12px 18px}
-    button[hidden]{display:none}
-    .note{font-size:10px;color:rgba(238,244,255,.42)}
-    @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-  </style>
+  <meta name="apple-mobile-web-app-title" content="Pocket VR" />
+  <link rel="manifest" href="./manifest.webmanifest?v=pocket-recovery-030" />
+  <title>Pocket VR — Recovery Build</title>
+  <link rel="stylesheet" href="./pocket-vr-next/styles-v013.css" />
+  <link rel="stylesheet" href="./pocket-vr-next/ui/pocket-glass-v030.css" />
 </head>
 <body>
-  <main>
-    <div class="orb" aria-hidden="true"></div>
-    <div class="chip">POCKET SPATIAL 0.4 · SAFARI FIX E</div>
-    <div><h1>Preparing your<br />spatial runtime.</h1></div>
-    <p id="bootStatus" role="status">Checking Pocket Spatial</p>
-    <div id="bootProgress" class="progress" role="progressbar" aria-label="Pocket Spatial setup" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
-    <button id="bootRetry" hidden>Try Again</button>
-    <p class="note">Safari Fix E repairs a single staged base64 boundary error only when the reconstructed bytes exactly match the release SHA-256.</p>
+  <video id="trackingVideo" playsinline muted></video>
+
+  <main id="stereoRoot" aria-label="Pocket VR stereo view">
+    <section class="eye" aria-label="Left eye"><canvas id="leftEyeCanvas"></canvas></section>
+    <div class="divider" aria-hidden="true"></div>
+    <section class="eye" aria-label="Right eye"><canvas id="rightEyeCanvas"></canvas></section>
   </main>
-  <script type="module" src="./bootstrap-v040e.js"></script>
+
+  <section id="startOverlay" class="start-overlay">
+    <article class="start-card">
+      <div class="pocket-launch">
+        <div class="pocket-preview" aria-hidden="true"><div class="pocket-preview-orb"></div></div>
+        <div class="pocket-launch-main">
+          <header class="pocket-topbar">
+            <span class="pocket-wordmark">Pocket VR</span>
+            <span id="launchStatusCapsule" class="pocket-status-capsule pocket-glass-light"><span class="pocket-status-dot"></span><span>Ready</span></span>
+          </header>
+          <div class="pocket-launch-copy">
+            <div id="buildLabel" class="build-label">RECOVERY 0.3 · TRACKING 0.2</div>
+            <h1>Your iPhone,<br />expanded into space.</h1>
+            <p>Direct GitHub Pages runtime. No archive installer. One or two hands are detected automatically.</p>
+          </div>
+          <div id="permissionList" class="pocket-readiness" aria-label="Pocket VR readiness">
+            <div class="pocket-ready-item pocket-glass-light"><strong>Camera</strong><span data-state="camera">Permission on entry</span></div>
+            <div class="pocket-ready-item pocket-glass-light"><strong>Motion</strong><span data-state="motion">Permission on entry</span></div>
+            <div class="pocket-ready-item pocket-glass-light"><strong>Hands</strong><span data-state="hands">Either hand can start</span></div>
+          </div>
+          <button id="enterButton" class="enter-button">Enter Pocket VR</button>
+          <p id="startStatus" class="status">One hand is enough. A second hand joins automatically when it appears.</p>
+          <div class="pocket-secondary-actions">
+            <button class="pocket-secondary-button pocket-glass-light" data-open-sheet="settingsSheet">Settings</button>
+            <button class="pocket-secondary-button pocket-glass-light" data-open-sheet="helpSheet">How it works</button>
+          </div>
+          <p class="pocket-privacy">Hand tracking runs in the browser on this device after the tracking model loads.</p>
+          <p class="standalone-hint">For the cleanest iPhone view: Share → Add to Home Screen.</p>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <div id="settingsSheet" class="pocket-sheet-backdrop" role="dialog" aria-modal="true" aria-label="Pocket VR settings">
+    <section class="pocket-sheet pocket-glass-heavy">
+      <header class="pocket-sheet-header"><div><h2>Settings</h2><p class="status">Appearance and accessibility</p></div><button class="pocket-icon-button" data-close-sheet aria-label="Close settings">×</button></header>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Appearance</strong><span>Adapt the Pocket Glass material</span></div><div class="pocket-segmented" aria-label="Appearance"><button data-theme-option="automatic" aria-selected="true">Auto</button><button data-theme-option="light">Light</button><button data-theme-option="dark">Dark</button></div></div>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Reduce Transparency</strong><span>More solid surfaces and less blur</span></div><button class="pocket-toggle" data-setting-toggle="reduceTransparency" aria-pressed="false" aria-label="Reduce transparency"></button></div>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Increase Contrast</strong><span>Stronger boundaries and text separation</span></div><button class="pocket-toggle" data-setting-toggle="increaseContrast" aria-pressed="false" aria-label="Increase contrast"></button></div>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Reduce Motion</strong><span>Minimise non-essential spatial animation</span></div><button class="pocket-toggle" data-setting-toggle="reduceMotion" aria-pressed="false" aria-label="Reduce motion"></button></div>
+    </section>
+  </div>
+
+  <div id="helpSheet" class="pocket-sheet-backdrop" role="dialog" aria-modal="true" aria-label="How Pocket VR controls work">
+    <section class="pocket-sheet pocket-glass-heavy">
+      <header class="pocket-sheet-header"><div><h2>Hand controls</h2><p class="status">Automatic and independent</p></div><button class="pocket-icon-button" data-close-sheet aria-label="Close help">×</button></header>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>One hand works</strong><span>Show either hand to the rear camera. It becomes a controller automatically.</span></div></div>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Second hand is optional</strong><span>If your other hand enters view, Pocket VR adds it automatically.</span></div></div>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Point + pinch</strong><span>Aim at a highlighted control, then touch thumb and index together once.</span></div></div>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Direct touch</strong><span>Bring your index fingertip close to a spatial button and press through its contact plane.</span></div></div>
+    </section>
+  </div>
+
+  <div id="touchControls" aria-label="Touch fallback controls">
+    <button id="touchRecenter">◎ Recenter</button>
+    <button id="touchCalibrate">✋ Hands</button>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((regs) => Promise.all(regs.map((reg) => reg.unregister()))).catch(() => {});
+    }
+    if ('caches' in window) {
+      caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith('pocket-spatial-runtime-')).map((key) => caches.delete(key)))).catch(() => {});
+    }
+  </script>
+  <script type="module" src="./pocket-vr-next/scene/renderer-controls-patch-v020.js"></script>
+  <script type="module" src="./pocket-vr-next/scene/interaction-fixes-v020.js"></script>
+  <script type="module" src="./pocket-vr-next/tracking/mediapipe-runtime-v020.js"></script>
+  <script type="module" src="./pocket-vr-next/tracking/worker-fastpath-v020.js"></script>
+  <script type="module" src="./pocket-vr-next/scene/renderer-liquid-v030.js"></script>
+  <script type="module" src="./pocket-vr-next/app-v020.js"></script>
+  <script type="module" src="./pocket-vr-next/ui/pocket-launch-v030.js"></script>
 </body>
 </html>
