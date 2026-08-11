@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#080b12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Pocket Spatial 0.4 · Safari Fix E Verified</title>
+  <style>
+    :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:#060810;color:#f7f9ff}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#060810}
+    body{display:grid;place-items:center;padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));background:radial-gradient(circle at 50% 16%,rgba(125,191,255,.25),transparent 30%),radial-gradient(circle at 82% 82%,rgba(159,130,255,.13),transparent 31%),linear-gradient(180deg,#101722,#070911 62%,#05070b)}
+    main{width:min(100%,430px);display:grid;gap:22px;text-align:center}
+    .orb{width:min(58vw,230px);aspect-ratio:1;margin:auto;border-radius:50%;background:radial-gradient(circle at 34% 27%,rgba(255,255,255,.85),transparent 9%),radial-gradient(circle at 42% 36%,rgba(132,205,255,.75),rgba(91,110,219,.46) 36%,rgba(11,17,35,.2) 68%,transparent 76%),linear-gradient(145deg,rgba(104,199,239,.75),rgba(116,95,211,.68));box-shadow:0 44px 90px rgba(28,53,111,.35),inset -22px -30px 54px rgba(16,16,42,.43),inset 12px 12px 30px rgba(255,255,255,.2)}
+    .chip{justify-self:center;padding:7px 11px;border:1px solid rgba(116,246,194,.42);border-radius:999px;background:rgba(23,66,55,.58);font-size:10px;font-weight:900;color:#74f6c2}
+    h1{margin:0;font-size:clamp(36px,11vw,52px);line-height:.96;letter-spacing:-.06em}
+    p{margin:0;color:rgba(238,244,255,.64);font-size:14px;line-height:1.45}
+    .progress{--progress:0%;height:7px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}
+    .progress::after{content:"";display:block;width:var(--progress);height:100%;border-radius:inherit;background:linear-gradient(90deg,#8bcfff,#aaa7ff)}
+    button{min-height:48px;border:0;border-radius:18px;background:#f7faff;color:#08111e;font:800 15px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;padding:12px 18px}
+    button[hidden]{display:none}
+    .note{font-size:10px;color:rgba(238,244,255,.42)}
+  </style>
+</head>
+<body>
+  <main>
+    <div class="orb" aria-hidden="true"></div>
+    <div class="chip">POCKET SPATIAL 0.4 · SAFARI FIX E · VERIFIED ENTRY</div>
+    <h1>Preparing your<br />spatial runtime.</h1>
+    <p id="bootStatus" role="status">Loading Fix E</p>
+    <div id="bootProgress" class="progress" role="progressbar" aria-label="Pocket Spatial setup" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+    <button id="bootRetry" hidden>Try Again</button>
+    <p class="note">This entry filename is unique and cannot be the previously cached Fix D document.</p>
+  </main>
+  <script type="module" src="./bootstrap-v040e.js?entry=verified-e-1"></script>
+</body>
+</html>
