@@ -15,10 +15,73 @@ function setStatus(message, fraction = null) {
   }
 }
 
-function base64ToBytes(base64) {
-  const binary = atob(base64.replace(/\s+/g, ''));
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+function decodeBase64Parts(parts) {
+  const output = [];
+  let carry = '';
+  let totalBytes = 0;
+
+  const decodeBlock = (block, label) => {
+    if (!block) return;
+    try {
+      const binary = atob(block);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+      output.push(bytes);
+      totalBytes += bytes.length;
+    } catch (error) {
+      throw new Error(`Release data could not be decoded (${label}). ${error?.message || 'Invalid base64 data.'}`);
+    }
+  };
+
+  parts.forEach((part, index) => {
+    const clean = String(part || '').replace(/\s+/g, '');
+    const bad = clean.match(/[^A-Za-z0-9+/=]/);
+    if (bad) {
+      const code = bad[0].codePointAt(0)?.toString(16).toUpperCase();
+      throw new Error(`Release chunk ${index + 1} contains an invalid character (U+${code || '????'}).`);
+    }
+
+    const isLast = index === parts.length - 1;
+    if (!isLast && clean.includes('=')) {
+      throw new Error(`Release chunk ${index + 1} contains unexpected base64 padding.`);
+    }
+
+    let text = carry + clean;
+    if (!isLast) {
+      const usable = text.length - (text.length % 4);
+      let offset = 0;
+      while (offset < usable) {
+        const end = Math.min(usable, offset + 16384);
+        const alignedEnd = end - ((end - offset) % 4);
+        if (alignedEnd <= offset) break;
+        decodeBlock(text.slice(offset, alignedEnd), `chunk ${index + 1}`);
+        offset = alignedEnd;
+      }
+      carry = text.slice(offset);
+      return;
+    }
+
+    text = text.replace(/=+$/, (padding) => padding.slice(0, 2));
+    const remainder = text.length % 4;
+    if (remainder === 1) throw new Error('Release data has an invalid base64 length.');
+    if (remainder) text += '='.repeat(4 - remainder);
+
+    let offset = 0;
+    while (offset < text.length) {
+      let end = Math.min(text.length, offset + 16384);
+      if (end < text.length) end -= (end - offset) % 4;
+      decodeBlock(text.slice(offset, end), 'final chunk');
+      offset = end;
+    }
+    carry = '';
+  });
+
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of output) {
+    bytes.set(chunk, offset);
+    offset += chunk.length;
+  }
   return bytes;
 }
 
@@ -96,7 +159,8 @@ async function fetchPayload() {
     if (!response.ok) throw new Error(`Could not download ${name} (${response.status}).`);
     parts.push(await response.text());
   }
-  return base64ToBytes(parts.join(''));
+  setStatus('Decoding spatial runtime', 0.51);
+  return decodeBase64Parts(parts);
 }
 
 async function installRelease(registration) {
