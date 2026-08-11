@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pocket-spatial-runtime-v040';
+const CACHE_NAME = 'pocket-spatial-runtime-v040c';
 const META_URL = new URL('__pocket_release__.json', self.registration.scope).href;
 
 function mimeFor(path) {
@@ -70,14 +70,24 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
+
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     const scope = new URL(self.registration.scope);
     const isRoot = url.pathname === scope.pathname || url.pathname === `${scope.pathname}index.html`;
-    if (isRoot && url.searchParams.get('runtime') === '040') {
-      const runtimeRoot = await cache.match(new URL('index.html', scope).href);
-      if (runtimeRoot) return runtimeRoot;
+
+    // The bootstrap/root page must always come from the network unless the URL
+    // explicitly requests the installed runtime. The previous worker cached the
+    // runtime index at the root URL and accidentally served it for every query,
+    // preventing new bootstrap fixes from ever becoming visible on Safari.
+    if (isRoot) {
+      if (url.searchParams.get('runtime') === '040') {
+        const runtimeRoot = await cache.match(new URL('index.html', scope).href);
+        if (runtimeRoot) return runtimeRoot;
+      }
+      return fetch(event.request, { cache: 'no-store' });
     }
+
     const clean = new URL(url.href);
     clean.search = '';
     const cached = await cache.match(clean.href);
