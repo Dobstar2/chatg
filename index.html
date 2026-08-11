@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket Spatial" />
-  <link rel="manifest" href="./manifest.webmanifest?v=040-bootstrap-c2" />
+  <link rel="manifest" href="./manifest.webmanifest?v=040-bootstrap-d" />
   <link rel="icon" href="./pocket-icon-v040.svg" type="image/svg+xml" />
-  <title>Pocket Spatial 0.4 · Safari Fix C2</title>
+  <title>Pocket Spatial 0.4 · Safari Fix D</title>
   <style>
     :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:#060810;color:#f7f9ff}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -32,13 +32,13 @@
 <body>
   <main>
     <div class="orb" aria-hidden="true"></div>
-    <div class="chip">POCKET SPATIAL 0.4 · SAFARI FIX C2</div>
+    <div class="chip">POCKET SPATIAL 0.4 · SAFARI FIX D</div>
     <div><h1>Preparing your<br />spatial runtime.</h1></div>
     <p id="bootStatus" role="status">Checking Pocket Spatial</p>
     <div id="bootProgress" class="progress" role="progressbar" aria-label="Pocket Spatial setup" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
     <button id="bootRetry" hidden>Try Again</button>
-    <p class="note">Safari Fix C2 resets the stale runtime worker before installing the verified Pocket Spatial release.</p>
+    <p class="note">Safari Fix D uses Pocket's own base64 decoder and does not depend on WebKit atob().</p>
   </main>
-  <script type="module" src="./bootstrap-v040c.js"></script>
+  <script type="module" src="./bootstrap-v040d.js"></script>
 </body>
 </html>
