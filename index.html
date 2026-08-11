@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket VR" />
-  <link rel="manifest" href="./manifest.webmanifest?v=pocket-recovery-030" />
-  <title>Pocket VR — Recovery Build</title>
+  <link rel="manifest" href="./manifest.webmanifest?v=pocket-recovery-021" />
+  <title>Pocket VR — Hand Tracking 0.2.1</title>
   <link rel="stylesheet" href="./pocket-vr-next/styles-v013.css" />
   <link rel="stylesheet" href="./pocket-vr-next/ui/pocket-glass-v030.css" />
 </head>
@@ -31,9 +31,9 @@
             <span id="launchStatusCapsule" class="pocket-status-capsule pocket-glass-light"><span class="pocket-status-dot"></span><span>Ready</span></span>
           </header>
           <div class="pocket-launch-copy">
-            <div id="buildLabel" class="build-label">RECOVERY 0.3 · TRACKING 0.2</div>
+            <div id="buildLabel" class="build-label">HAND FIX 0.2.1 · CONTINUOUS</div>
             <h1>Your iPhone,<br />expanded into space.</h1>
-            <p>Direct GitHub Pages runtime. No archive installer. One or two hands are detected automatically.</p>
+            <p>Continuous fresh-frame hand tracking. Either hand can appear, disappear, and reacquire automatically.</p>
           </div>
           <div id="permissionList" class="pocket-readiness" aria-label="Pocket VR readiness">
             <div class="pocket-ready-item pocket-glass-light"><strong>Camera</strong><span data-state="camera">Permission on entry</span></div>
@@ -41,7 +41,7 @@
             <div class="pocket-ready-item pocket-glass-light"><strong>Hands</strong><span data-state="hands">Either hand can start</span></div>
           </div>
           <button id="enterButton" class="enter-button">Enter Pocket VR</button>
-          <p id="startStatus" class="status">One hand is enough. A second hand joins automatically when it appears.</p>
+          <p id="startStatus" class="status">Show either hand whenever you want. It should reacquire automatically after leaving view.</p>
           <div class="pocket-secondary-actions">
             <button class="pocket-secondary-button pocket-glass-light" data-open-sheet="settingsSheet">Settings</button>
             <button class="pocket-secondary-button pocket-glass-light" data-open-sheet="helpSheet">How it works</button>
@@ -67,9 +67,9 @@
     <section class="pocket-sheet pocket-glass-heavy">
       <header class="pocket-sheet-header"><div><h2>Hand controls</h2><p class="status">Automatic and independent</p></div><button class="pocket-icon-button" data-close-sheet aria-label="Close help">×</button></header>
       <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>One hand works</strong><span>Show either hand to the rear camera. It becomes a controller automatically.</span></div></div>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Reacquisition</strong><span>Move a hand out of view and bring it back. Tracking resumes automatically without restarting.</span></div></div>
       <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Second hand is optional</strong><span>If your other hand enters view, Pocket VR adds it automatically.</span></div></div>
       <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Point + pinch</strong><span>Aim at a highlighted control, then touch thumb and index together once.</span></div></div>
-      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Direct touch</strong><span>Bring your index fingertip close to a spatial button and press through its contact plane.</span></div></div>
     </section>
   </div>
 
@@ -89,9 +89,9 @@
   <script type="module" src="./pocket-vr-next/scene/renderer-controls-patch-v020.js"></script>
   <script type="module" src="./pocket-vr-next/scene/interaction-fixes-v020.js"></script>
   <script type="module" src="./pocket-vr-next/tracking/mediapipe-runtime-v020.js"></script>
-  <script type="module" src="./pocket-vr-next/tracking/worker-fastpath-v020.js"></script>
+  <script type="module" src="./pocket-vr-next/tracking/worker-fastpath-v021.js"></script>
   <script type="module" src="./pocket-vr-next/scene/renderer-liquid-v030.js"></script>
-  <script type="module" src="./pocket-vr-next/app-v020.js"></script>
-  <script type="module" src="./pocket-vr-next/ui/pocket-launch-v030.js"></script>
+  <script type="module" src="./pocket-vr-next/app-v020.js?v=hand-fix-021"></script>
+  <script type="module" src="./pocket-vr-next/ui/pocket-launch-v030.js?v=hand-fix-021"></script>
 </body>
 </html>
