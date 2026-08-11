@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#07090f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Pocket VR Recovery Direct</title>
+  <link rel="stylesheet" href="./pocket-vr-next/styles-v013.css" />
+  <link rel="stylesheet" href="./pocket-vr-next/ui/pocket-glass-v030.css" />
+</head>
+<body>
+  <video id="trackingVideo" playsinline muted></video>
+  <main id="stereoRoot" aria-label="Pocket VR stereo view">
+    <section class="eye" aria-label="Left eye"><canvas id="leftEyeCanvas"></canvas></section>
+    <div class="divider" aria-hidden="true"></div>
+    <section class="eye" aria-label="Right eye"><canvas id="rightEyeCanvas"></canvas></section>
+  </main>
+  <section id="startOverlay" class="start-overlay">
+    <article class="start-card">
+      <div class="pocket-launch">
+        <div class="pocket-preview" aria-hidden="true"><div class="pocket-preview-orb"></div></div>
+        <div class="pocket-launch-main">
+          <header class="pocket-topbar"><span class="pocket-wordmark">Pocket VR</span><span id="launchStatusCapsule" class="pocket-status-capsule pocket-glass-light"><span class="pocket-status-dot"></span><span>Direct</span></span></header>
+          <div class="pocket-launch-copy"><div id="buildLabel" class="build-label">DIRECT RECOVERY · TRACKING 0.2</div><h1>Your iPhone,<br />expanded into space.</h1><p>No archive installer. One or two hands are detected automatically.</p></div>
+          <div id="permissionList" class="pocket-readiness" aria-label="Pocket VR readiness">
+            <div class="pocket-ready-item pocket-glass-light"><strong>Camera</strong><span data-state="camera">Permission on entry</span></div>
+            <div class="pocket-ready-item pocket-glass-light"><strong>Motion</strong><span data-state="motion">Permission on entry</span></div>
+            <div class="pocket-ready-item pocket-glass-light"><strong>Hands</strong><span data-state="hands">Either hand can start</span></div>
+          </div>
+          <button id="enterButton" class="enter-button">Enter Pocket VR</button>
+          <p id="startStatus" class="status">One hand is enough. A second hand joins automatically.</p>
+          <p class="pocket-privacy">Direct static GitHub Pages build.</p>
+        </div>
+      </div>
+    </article>
+  </section>
+  <div id="settingsSheet" class="pocket-sheet-backdrop" role="dialog" aria-modal="true" aria-label="Pocket VR settings"></div>
+  <div id="helpSheet" class="pocket-sheet-backdrop" role="dialog" aria-modal="true" aria-label="Pocket VR help"></div>
+  <div id="touchControls" aria-label="Touch fallback controls"><button id="touchRecenter">◎ Recenter</button><button id="touchCalibrate">✋ Hands</button></div>
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(r => Promise.all(r.map(x => x.unregister()))).catch(()=>{});
+    if ('caches' in window) caches.keys().then(k => Promise.all(k.filter(x => x.startsWith('pocket-spatial-runtime-')).map(x => caches.delete(x)))).catch(()=>{});
+  </script>
+  <script type="module" src="./pocket-vr-next/scene/renderer-controls-patch-v020.js"></script>
+  <script type="module" src="./pocket-vr-next/scene/interaction-fixes-v020.js"></script>
+  <script type="module" src="./pocket-vr-next/tracking/mediapipe-runtime-v020.js"></script>
+  <script type="module" src="./pocket-vr-next/tracking/worker-fastpath-v020.js"></script>
+  <script type="module" src="./pocket-vr-next/scene/renderer-liquid-v030.js"></script>
+  <script type="module" src="./pocket-vr-next/app-v020.js"></script>
+  <script type="module" src="./pocket-vr-next/ui/pocket-launch-v030.js"></script>
+</body>
+</html>
