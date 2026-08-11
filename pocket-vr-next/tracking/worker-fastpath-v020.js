@@ -6,7 +6,22 @@ const mainStop = HandTrackingManagerV2.prototype.stop;
 const mainPause = HandTrackingManagerV2.prototype.pause;
 const mainResume = HandTrackingManagerV2.prototype.resume;
 
+function isAppleWebKit() {
+  const ua = navigator.userAgent || '';
+  const platform = navigator.platform || '';
+  const touchMac = platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  return /iPhone|iPad|iPod/i.test(ua)
+    || touchMac
+    || (/AppleWebKit/i.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR/i.test(ua));
+}
+
 function supportsWorkerFrames(manager) {
+  // MediaStreamTrackProcessor + transferable VideoFrame is not reliable enough
+  // on current iPhone WebKit for the authoritative controller path. In
+  // particular, the processor can produce a valid first frame and then end its
+  // reader. That looked like a hand appearing briefly and disappearing forever.
+  // Keep iPhone Safari on the proven requestVideoFrameCallback/main-thread path.
+  if (isAppleWebKit()) return false;
   return typeof Worker !== 'undefined'
     && typeof MediaStreamTrackProcessor !== 'undefined'
     && typeof VideoFrame !== 'undefined'
@@ -138,7 +153,15 @@ HandTrackingManagerV2.prototype._readNewestFrames = async function readNewestFra
       if (this.running) this._fallbackFromWorker('track-reader-error');
       return;
     }
-    if (!packet || packet.done) return;
+
+    // An ended processor while the app is still running is not a successful
+    // completion. Switch back to the reliable main tracker immediately.
+    if (!packet || packet.done) {
+      if (this.running && !this.paused && reader === this._trackReader) {
+        this._fallbackFromWorker('track-reader-ended');
+      }
+      return;
+    }
 
     const frame = packet.value;
     if (!frame) continue;
@@ -163,7 +186,7 @@ HandTrackingManagerV2.prototype._readNewestFrames = async function readNewestFra
     this.lastModelTimestamp = modelTimestamp;
     this._workerSentAt.set(token, now);
     this.metrics.frameFreshnessMs = captureAgeMs;
-    this.metrics.cameraResolution = `${frame.displayWidth || frame.codedWidth || this.video.videoWidth}x${frame.displayHeight || frame.codedHeight || this.video.videoHeight}`;
+    this.metrics.cameraResolution = `${frame.displayWidth || frame.codedWidth || this.video.videoWidth}x${frame.displayHeight || this.video.videoHeight}`;
 
     try {
       this._trackingWorker.postMessage({
@@ -238,7 +261,7 @@ HandTrackingManagerV2.prototype._fallbackFromWorker = async function fallbackFro
 
   try {
     await mainInitialize.call(this);
-    this.metrics.model = '@mediapipe/tasks-vision HandLandmarker 0.10.35 · main fallback';
+    this.metrics.model = `@mediapipe/tasks-vision HandLandmarker main fallback (${reason})`;
     if (restart) mainStart.call(this);
   } catch (error) {
     this.dispatchEvent(new CustomEvent('error', { detail: error }));
