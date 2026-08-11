@@ -7,13 +7,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket VR" />
-  <link rel="manifest" href="./manifest.webmanifest?v=pocket-recovery-021" />
-  <title>Pocket VR — Hand Tracking 0.2.1</title>
+  <link rel="manifest" href="./manifest.webmanifest?v=hand-fix-022" />
+  <title>Pocket VR — Hand Fix 0.2.2</title>
   <link rel="stylesheet" href="./pocket-vr-next/styles-v013.css" />
   <link rel="stylesheet" href="./pocket-vr-next/ui/pocket-glass-v030.css" />
 </head>
 <body>
   <video id="trackingVideo" playsinline muted></video>
+
   <main id="stereoRoot" aria-label="Pocket VR stereo view">
     <section class="eye" aria-label="Left eye"><canvas id="leftEyeCanvas"></canvas></section>
     <div class="divider" aria-hidden="true"></div>
@@ -30,22 +31,22 @@
             <span id="launchStatusCapsule" class="pocket-status-capsule pocket-glass-light"><span class="pocket-status-dot"></span><span>Ready</span></span>
           </header>
           <div class="pocket-launch-copy">
-            <div id="buildLabel" class="build-label">HAND FIX 0.2.1 · CONTINUOUS</div>
+            <div id="buildLabel" class="build-label">HAND FIX 0.2.2 · SAFARI TIMER</div>
             <h1>Your iPhone,<br />expanded into space.</h1>
-            <p>Continuous fresh-frame hand tracking. Either hand can appear, disappear, and reacquire automatically.</p>
+            <p>Camera-time hand tracking that does not depend on Safari presenting the hidden tracking video.</p>
           </div>
           <div id="permissionList" class="pocket-readiness" aria-label="Pocket VR readiness">
             <div class="pocket-ready-item pocket-glass-light"><strong>Camera</strong><span data-state="camera">Permission on entry</span></div>
             <div class="pocket-ready-item pocket-glass-light"><strong>Motion</strong><span data-state="motion">Permission on entry</span></div>
-            <div class="pocket-ready-item pocket-glass-light"><strong>Hands</strong><span data-state="hands">Either hand can start</span></div>
+            <div class="pocket-ready-item pocket-glass-light"><strong>Hands</strong><span data-state="hands">Either hand can start or return later</span></div>
           </div>
           <button id="enterButton" class="enter-button">Enter Pocket VR</button>
-          <p id="startStatus" class="status">Show either hand whenever you want. It should reacquire automatically after leaving view.</p>
+          <p id="startStatus" class="status">Start with no hand, one hand, or two. Hands should reacquire automatically whenever they enter view.</p>
           <div class="pocket-secondary-actions">
             <button class="pocket-secondary-button pocket-glass-light" data-open-sheet="settingsSheet">Settings</button>
             <button class="pocket-secondary-button pocket-glass-light" data-open-sheet="helpSheet">How it works</button>
           </div>
-          <p class="pocket-privacy">Hand tracking runs in the browser on this device after the tracking model loads.</p>
+          <p class="pocket-privacy">Tracking runs locally in the browser after the MediaPipe model loads.</p>
           <p class="standalone-hint">For the cleanest iPhone view: Share → Add to Home Screen.</p>
         </div>
       </div>
@@ -65,10 +66,10 @@
   <div id="helpSheet" class="pocket-sheet-backdrop" role="dialog" aria-modal="true" aria-label="How Pocket VR controls work">
     <section class="pocket-sheet pocket-glass-heavy">
       <header class="pocket-sheet-header"><div><h2>Hand controls</h2><p class="status">Automatic and independent</p></div><button class="pocket-icon-button" data-close-sheet aria-label="Close help">×</button></header>
-      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>One hand works</strong><span>Show either hand to the rear camera. It becomes a controller automatically.</span></div></div>
-      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Reacquisition</strong><span>Move a hand out of view and bring it back. Tracking resumes automatically without restarting.</span></div></div>
-      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Second hand is optional</strong><span>If your other hand enters view, Pocket VR adds it automatically.</span></div></div>
-      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Point + pinch</strong><span>Aim at a highlighted control, then touch thumb and index together once.</span></div></div>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>One hand works</strong><span>Either hand becomes a controller independently.</span></div></div>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Continuous reacquisition</strong><span>Leave view and return later without restarting the experience.</span></div></div>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Second hand is optional</strong><span>It joins automatically whenever detected.</span></div></div>
+      <div class="pocket-setting-row"><div class="pocket-setting-copy"><strong>Point + pinch</strong><span>Aim at a highlighted control and pinch once to activate it.</span></div></div>
     </section>
   </div>
 
@@ -78,20 +79,17 @@
   </div>
 
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then((regs) => Promise.all(regs.map((reg) => reg.unregister()))).catch(() => {});
-    }
-    if ('caches' in window) {
-      caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith('pocket-spatial-runtime-')).map((key) => caches.delete(key)))).catch(() => {});
-    }
+    if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then((regs) => Promise.all(regs.map((reg) => reg.unregister()))).catch(() => {});
+    if ('caches' in window) caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith('pocket-spatial-runtime-')).map((key) => caches.delete(key)))).catch(() => {});
   </script>
   <script type="module" src="./pocket-vr-next/scene/renderer-controls-patch-v020.js"></script>
   <script type="module" src="./pocket-vr-next/scene/interaction-fixes-v020.js"></script>
   <script type="module" src="./pocket-vr-next/tracking/mediapipe-runtime-v020.js"></script>
   <script type="module" src="./pocket-vr-next/tracking/worker-fastpath-v021.js"></script>
+  <script type="module" src="./pocket-vr-next/tracking/safari-continuous-v022.js"></script>
   <script type="module" src="./pocket-vr-next/scene/renderer-liquid-v030.js"></script>
-  <script type="module" src="./pocket-vr-next/app-v020.js?v=hand-fix-021"></script>
-  <script type="module" src="./pocket-vr-next/ui/pocket-launch-v030.js?v=hand-fix-021"></script>
-  <script type="module" src="./pocket-vr-next/ui/hand-fix-label-v021.js"></script>
+  <script type="module" src="./pocket-vr-next/app-v020.js?v=hand-fix-022"></script>
+  <script type="module" src="./pocket-vr-next/ui/pocket-launch-v030.js?v=hand-fix-022"></script>
+  <script type="module" src="./pocket-vr-next/ui/hand-fix-label-v022.js"></script>
 </body>
 </html>
