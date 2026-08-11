@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket Spatial" />
-  <link rel="manifest" href="./manifest.webmanifest?v=040-bootstrap-b" />
+  <link rel="manifest" href="./manifest.webmanifest?v=040-bootstrap-c" />
   <link rel="icon" href="./pocket-icon-v040.svg" type="image/svg+xml" />
   <title>Pocket Spatial 0.4</title>
   <style>
@@ -32,13 +32,13 @@
 <body>
   <main>
     <div class="orb" aria-hidden="true"></div>
-    <div class="chip">POCKET SPATIAL 0.4</div>
+    <div class="chip">POCKET SPATIAL 0.4 · SAFARI FIX C</div>
     <div><h1>Preparing your<br />spatial runtime.</h1></div>
     <p id="bootStatus" role="status">Checking Pocket Spatial</p>
     <div id="bootProgress" class="progress" role="progressbar" aria-label="Pocket Spatial setup" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
     <button id="bootRetry" hidden>Try Again</button>
     <p class="note">The release is integrity-checked, installed into Safari’s local site cache, and then runs from this GitHub Pages origin.</p>
   </main>
-  <script type="module" src="./bootstrap-v040b.js"></script>
+  <script type="module" src="./bootstrap-v040b.js?fix=base64-stream-c"></script>
 </body>
 </html>
