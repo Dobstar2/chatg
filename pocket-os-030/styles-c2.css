@@ -1,0 +1,44 @@
+.search-bar {
+  bottom: max(64px, calc(env(safe-area-inset-bottom) + 58px));
+  z-index: 86;
+}
+
+.browser-bar button.secondary {
+  color: #eef4ff;
+  background: rgba(255,255,255,.08);
+}
+
+html[data-reduce-transparency="true"] .launch-card,
+html[data-reduce-transparency="true"] .trusted-bar,
+html[data-reduce-transparency="true"] .browser-bar {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: rgba(10,15,25,.97);
+}
+
+html[data-high-contrast="true"] .launch-card,
+html[data-high-contrast="true"] .trusted-bar,
+html[data-high-contrast="true"] .browser-bar {
+  border-color: rgba(255,255,255,.42);
+}
+
+html[data-high-contrast="true"] .lead,
+html[data-high-contrast="true"] .start-status,
+html[data-high-contrast="true"] .small-note,
+html[data-high-contrast="true"] .readiness-grid span {
+  color: rgba(244,248,255,.88);
+}
+
+html[data-reduce-motion="true"] *,
+html[data-reduce-motion="true"] *::before,
+html[data-reduce-motion="true"] *::after {
+  animation-duration: .001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .001ms !important;
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .search-bar {
+    bottom: max(52px, calc(env(safe-area-inset-bottom) + 46px));
+  }
+}

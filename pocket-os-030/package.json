@@ -4,6 +4,6 @@
   "type": "module",
   "scripts": {
     "test": "node --test ./tests/*.test.js",
-    "check": "node --check app.js && node --check scene/renderer.js"
+    "check": "node --check app.js && node --check app-c2.js && node --check scene/renderer.js && node --check scene/renderer-c2-base.js && node --check scene/renderer-c2.js && node --check core/preferences.js && node --check core/library-search.js"
   }
 }
