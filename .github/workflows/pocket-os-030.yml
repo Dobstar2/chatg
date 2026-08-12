@@ -1,0 +1,32 @@
+name: Pocket OS 0.3 Candidate
+
+on:
+  push:
+    branches:
+      - agent/pocket-spatial-os-030
+    paths:
+      - 'pocket-os-030/**'
+      - '.github/workflows/pocket-os-030.yml'
+  pull_request:
+    paths:
+      - 'pocket-os-030/**'
+      - '.github/workflows/pocket-os-030.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        working-directory: pocket-os-030
+        run: npm run check
+      - name: Regression tests
+        working-directory: pocket-os-030
+        run: npm test
