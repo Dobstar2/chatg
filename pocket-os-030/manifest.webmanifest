@@ -1,0 +1,11 @@
+{
+  "name": "Pocket VR Spatial OS Candidate",
+  "short_name": "Pocket VR",
+  "description": "Pocket VR 0.3 candidate: head aim, pinch confirmation, spatial apps and SBS cinema.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#02040a",
+  "theme_color": "#05070d"
+}
