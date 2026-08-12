@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket VR" />
-  <link rel="manifest" href="./manifest.webmanifest?v=os030c1h1" />
-  <link rel="stylesheet" href="./styles.css?v=os030c1h1" />
-  <title>Pocket VR - POCKET OS 0.3 C1-H1</title>
+  <link rel="manifest" href="./manifest.webmanifest?v=os030c1h1i1" />
+  <link rel="stylesheet" href="./styles.css?v=os030c1h1i1" />
+  <title>Pocket VR - POCKET OS 0.3 C1-H1-I1</title>
 </head>
 <body>
   <video id="trackingVideo" playsinline muted aria-hidden="true"></video>
@@ -31,20 +31,20 @@
       <header class="launch-header">
         <div>
           <div class="eyebrow">POCKET VR</div>
-          <div id="buildLabel" class="build-label">POCKET OS 0.3 C1-H1</div>
+          <div id="buildLabel" class="build-label">POCKET OS 0.3 C1-H1-I1</div>
         </div>
-        <div class="status-pill"><span class="status-dot"></span>Hand Fix</div>
+        <div class="status-pill"><span class="status-dot"></span>Icon Refresh</div>
       </header>
       <div class="launch-orb" aria-hidden="true"><span></span></div>
       <h1>Look. Pinch. Done.</h1>
-      <p class="lead">Head aim is the primary pointer. Pinch either tracked hand to select. If pinch is unavailable, keep looking at the target and tap the screen.</p>
+      <p class="lead">Head aim is the primary pointer. Pinch either tracked hand to select. App tiles now use compact spatial pictograms instead of oversized letter badges.</p>
       <div class="readiness-grid" aria-label="Control summary">
         <div><strong>Head Aim</strong><span>Centre reticle targets controls</span></div>
         <div><strong>Pinch</strong><span>Either hand confirms selection</span></div>
         <div><strong>Touch</strong><span>Always-available fallback</span></div>
       </div>
       <button id="enterButton" class="enter-button" type="button">Enter Pocket VR</button>
-      <p id="startStatus" class="start-status">Hand runtime is aligned with the Safari continuous tracker. No service worker is registered by this candidate.</p>
+      <p id="startStatus" class="start-status">Safari continuous hand tracking remains enabled. App icons use lightweight vector-style canvas pictograms with no image downloads.</p>
       <p class="small-note">For headset use, rotate to landscape before entering. iOS may show Camera and Motion permission prompts.</p>
     </article>
   </section>
@@ -73,6 +73,6 @@
       }
     }
   </script>
-  <script type="module" src="./app.js?v=os030c1h1"></script>
+  <script type="module" src="./app-entry-icons-v1.js?v=os030c1h1i1"></script>
 </body>
 </html>
