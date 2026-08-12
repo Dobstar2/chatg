@@ -1,0 +1,28 @@
+name: SpatialHands iOS build
+
+on:
+  pull_request:
+    paths:
+      - "SpatialHands-iOS/**"
+      - ".github/workflows/spatialhands-ios-build.yml"
+  push:
+    paths:
+      - "SpatialHands-iOS/**"
+      - ".github/workflows/spatialhands-ios-build.yml"
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build for a generic iOS Simulator
+        working-directory: SpatialHands-iOS
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project SpatialHands.xcodeproj \
+            -scheme SpatialHands \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            clean build
