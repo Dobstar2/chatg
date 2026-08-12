@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Wait for GitHub Pages candidate and verify protected root
+      - name: Wait for GitHub Pages hand-fix candidate and verify protected root
         shell: bash
         run: |
           set -euo pipefail
@@ -47,12 +47,12 @@ jobs:
           for attempt in $(seq 1 48); do
             candidate_html=$(curl -fsSL --max-time 15 "${candidate}?smoke=${GITHUB_SHA}" || true)
             root_html=$(curl -fsSL --max-time 15 "${root}?smoke=${GITHUB_SHA}" || true)
-            if grep -q 'POCKET OS 0.3 C1' <<<"${candidate_html}" && grep -q 'SAFARI TIMER' <<<"${root_html}"; then
-              echo 'Pocket OS candidate is live and the protected root is unchanged.'
+            if grep -q 'POCKET OS 0.3 C1-H1' <<<"${candidate_html}" && grep -q 'hand-tracking-v020.js?v=os030' <<<"${candidate_html}" && grep -q 'SAFARI TIMER' <<<"${root_html}"; then
+              echo 'Pocket OS hand-fix candidate is live and the protected root is unchanged.'
               exit 0
             fi
             echo "Pages not ready yet (attempt ${attempt}/48)."
             sleep 10
           done
-          echo 'Timed out waiting for expected GitHub Pages content.' >&2
+          echo 'Timed out waiting for expected GitHub Pages hand-fix content.' >&2
           exit 1
