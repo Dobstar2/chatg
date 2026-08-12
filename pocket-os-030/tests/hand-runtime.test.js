@@ -28,10 +28,10 @@ test('Safari continuous and MediaPipe runtime patches target the canonical hand 
   assert.ok(runtimePatch.includes('@mediapipe/tasks-vision@0.10.35'));
 });
 
-test('hand fix has a unique visible build marker and no service worker registration', () => {
+test('hand fix identity survives visual release suffixes and no service worker is registered', () => {
   const html = read('index.html');
   const version = read('core/version.js');
   assert.ok(html.includes('POCKET OS 0.3 C1-H1'));
-  assert.ok(version.includes("BUILD_SHORT = 'POCKET OS 0.3 C1-H1'"));
+  assert.match(version, /BUILD_SHORT\s*=\s*'POCKET OS 0\.3 C1-H1(?:-[A-Z0-9]+)*'/);
   assert.equal(/serviceWorker\s*\.\s*register|navigator\.serviceWorker\.register/.test(html), false);
 });
