@@ -7,9 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket VR" />
-  <link rel="manifest" href="./manifest.webmanifest?v=os030c1" />
+  <link rel="manifest" href="./manifest.webmanifest?v=os030c2" />
   <link rel="stylesheet" href="./styles.css?v=os030c1" />
-  <title>Pocket VR - POCKET OS 0.3 C1</title>
+  <link rel="stylesheet" href="./styles-c2.css?v=os030c2" />
+  <title>Pocket VR - POCKET OS 0.3 C2</title>
 </head>
 <body>
   <video id="trackingVideo" playsinline muted aria-hidden="true"></video>
@@ -17,13 +18,9 @@
   <audio id="mediaAudio" preload="metadata" aria-hidden="true"></audio>
 
   <main id="stereoRoot" aria-label="Pocket VR stereo spatial view">
-    <section class="eye" aria-label="Left eye view">
-      <canvas id="leftEyeCanvas"></canvas>
-    </section>
+    <section class="eye" aria-label="Left eye view"><canvas id="leftEyeCanvas"></canvas></section>
     <div class="divider" aria-hidden="true"></div>
-    <section class="eye" aria-label="Right eye view">
-      <canvas id="rightEyeCanvas"></canvas>
-    </section>
+    <section class="eye" aria-label="Right eye view"><canvas id="rightEyeCanvas"></canvas></section>
   </main>
 
   <section id="startOverlay" class="start-overlay" aria-label="Pocket VR start">
@@ -31,21 +28,21 @@
       <header class="launch-header">
         <div>
           <div class="eyebrow">POCKET VR</div>
-          <div id="buildLabel" class="build-label">POCKET OS 0.3 C1</div>
+          <div id="buildLabel" class="build-label">POCKET OS 0.3 C2</div>
         </div>
-        <div class="status-pill"><span class="status-dot"></span>Candidate</div>
+        <div class="status-pill"><span class="status-dot"></span>Candidate 2</div>
       </header>
       <div class="launch-orb" aria-hidden="true"><span></span></div>
       <h1>Look. Pinch. Done.</h1>
-      <p class="lead">Head aim is the primary pointer. Pinch either tracked hand to select. If pinch is unavailable, keep looking at the target and tap the screen.</p>
+      <p class="lead">Head aim is the primary pointer. Either hand can pinch to confirm. Touch always remains available, with dwell as an accessibility option.</p>
       <div class="readiness-grid" aria-label="Control summary">
-        <div><strong>Head Aim</strong><span>Centre reticle targets controls</span></div>
-        <div><strong>Pinch</strong><span>Either hand confirms selection</span></div>
-        <div><strong>Touch</strong><span>Always-available fallback</span></div>
+        <div><strong>Head Aim</strong><span>Smart centre targeting with stickiness</span></div>
+        <div><strong>Pinch</strong><span>Either hand confirms and holds</span></div>
+        <div><strong>Touch</strong><span>Reliable confirmation and trusted iOS actions</span></div>
       </div>
       <button id="enterButton" class="enter-button" type="button">Enter Pocket VR</button>
-      <p id="startStatus" class="start-status">This candidate does not register a service worker and does not replace the stable root build.</p>
-      <p class="small-note">For headset use, rotate to landscape before entering. iOS may show Camera and Motion permission prompts.</p>
+      <p id="startStatus" class="start-status">C2 adds persistent controls/accessibility settings, native Library search, window move/resize/snap, richer Cinema and Gallery, Environments and Focus.</p>
+      <p class="small-note">No candidate service worker. The stable root remains separate until real iPhone acceptance testing passes.</p>
     </article>
   </section>
 
@@ -59,6 +56,12 @@
     <button id="browserOpen" type="button">Open in Safari</button>
   </section>
 
+  <section id="searchBar" class="browser-bar search-bar" aria-label="Pocket Library search">
+    <input id="searchInput" type="search" enterkeyhint="search" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Search Pocket apps" />
+    <button id="searchApply" type="button">Search</button>
+    <button id="searchClear" class="secondary" type="button">Clear</button>
+  </section>
+
   <div id="touchHint" class="touch-hint" aria-hidden="true">LOOK + PINCH · TAP FALLBACK</div>
 
   <input id="videoInput" class="hidden-input" type="file" accept="video/*" />
@@ -66,6 +69,6 @@
   <input id="imageInput" class="hidden-input" type="file" accept="image/*" multiple />
 
   <noscript>Pocket VR requires JavaScript.</noscript>
-  <script type="module" src="./app.js?v=os030c1"></script>
+  <script type="module" src="./app-c2.js?v=os030c2"></script>
 </body>
 </html>
