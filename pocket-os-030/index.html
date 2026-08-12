@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket VR" />
-  <link rel="manifest" href="./manifest.webmanifest?v=os030c2" />
+  <link rel="manifest" href="./manifest.webmanifest?v=os030c2h1" />
   <link rel="stylesheet" href="./styles.css?v=os030c1" />
-  <link rel="stylesheet" href="./styles-c2.css?v=os030c2" />
+  <link rel="stylesheet" href="./styles-c2.css?v=os030c2h1" />
   <title>Pocket VR - POCKET OS 0.3 C2</title>
 </head>
 <body>
@@ -69,6 +69,13 @@
   <input id="imageInput" class="hidden-input" type="file" accept="image/*" multiple />
 
   <noscript>Pocket VR requires JavaScript.</noscript>
-  <script type="module" src="./app.js?v=os030c2"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "../pocket-vr-next/tracking/hand-tracking-v020.js?v=os030c2": "../pocket-vr-next/tracking/hand-tracking-v020.js"
+      }
+    }
+  </script>
+  <script type="module" src="./app.js?v=os030c2h1"></script>
 </body>
 </html>
