@@ -135,3 +135,14 @@ test('C2 includes a trusted native Library search input instead of a spatial key
   assert.ok(html.includes('type="search"'));
   assert.ok(html.includes('enterkeyhint="search"'));
 });
+
+test('pinned windows lock their location until explicitly unpinned', () => {
+  const windows = new WindowManager();
+  windows.open('clock');
+  windows.togglePin('clock');
+  assert.equal(windows.beginMove('clock'), false);
+  assert.equal(windows.snap('clock', 'left'), false);
+  windows.togglePin('clock');
+  assert.equal(windows.snap('clock', 'left'), true);
+  assert.equal(windows.beginMove('clock'), true);
+});

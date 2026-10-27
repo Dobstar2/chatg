@@ -235,8 +235,9 @@ class PocketSpatialOSC2 {
       if (event.key === 'Enter') this._applyLibrarySearch();
     });
 
-    window.addEventListener('pagehide', () => {
-      if (!document.persisted) this._releaseObjectUrls();
+    window.addEventListener('pagehide', (event) => {
+      // On bfcache navigation, the page (and its selected media) may resume.
+      if (!event.persisted) this._releaseObjectUrls();
     });
   }
 
@@ -779,9 +780,12 @@ class PocketSpatialOSC2 {
 
   _loadVideo(file) {
     if (!file) return;
+    const previousUrl = this.media.video.src;
     const url = URL.createObjectURL(file);
     this.mediaObjectUrls.push(url);
+    this.media.video.pause();
     this.media.video.src = url;
+    if (previousUrl?.startsWith('blob:')) this._revokeObjectUrl(previousUrl);
     this.media.video.load();
     this.media.videoReady = true;
     this.apps.cinema.controlsVisible = true;
@@ -791,9 +795,12 @@ class PocketSpatialOSC2 {
 
   async _loadAudio(file) {
     if (!file) return;
+    const previousUrl = this.media.audio.src;
     const url = URL.createObjectURL(file);
     this.mediaObjectUrls.push(url);
+    this.media.audio.pause();
     this.media.audio.src = url;
+    if (previousUrl?.startsWith('blob:')) this._revokeObjectUrl(previousUrl);
     this.media.audio.load();
     this.media.audioReady = true;
     try { await this._ensureAnalyser(); } catch (error) { console.warn('Audio analyser unavailable', error); }
@@ -802,6 +809,11 @@ class PocketSpatialOSC2 {
   }
 
   _loadImages(files) {
+    if (!files.length) return;
+    // Re-selection replaces the previous batch; never leak an unbounded pile
+    // of full-resolution iPhone photo blobs into Safari's memory.
+    for (const previous of this.media.images) this._revokeObjectUrl(previous.url);
+    this.media.images = [];
     for (const file of files.slice(0, 12)) {
       const url = URL.createObjectURL(file);
       this.mediaObjectUrls.push(url);
@@ -889,6 +901,11 @@ class PocketSpatialOSC2 {
     void document.body.offsetWidth;
     document.body.classList.add('select-pulse');
     setTimeout(() => document.body.classList.remove('select-pulse'), 130);
+  }
+
+  _revokeObjectUrl(url) {
+    this.mediaObjectUrls = this.mediaObjectUrls.filter((entry) => entry !== url);
+    try { URL.revokeObjectURL(url); } catch (_) {}
   }
 
   _releaseObjectUrls() {

@@ -47,13 +47,17 @@ export class SpatialRenderer extends SpatialRendererC2Base {
         const p = window.position;
         addTarget(targets, `window:resize:${window.id}`, 'Resize', v3(p.x - 0.28, p.y - 0.32, p.z + 0.02), { priority: 0.5 });
         addTarget(targets, `window:pin:${window.id}`, window.pinned ? 'Unpin' : 'Pin', v3(p.x - 0.14, p.y - 0.32, p.z + 0.02));
-        addTarget(targets, `window:snap-left:${window.id}`, 'Left', v3(p.x, p.y - 0.32, p.z + 0.02), { angularRadius: 0.035 });
-        addTarget(targets, `window:snap-center:${window.id}`, 'Centre', v3(p.x + 0.14, p.y - 0.32, p.z + 0.02), { angularRadius: 0.035 });
-        addTarget(targets, `window:snap-right:${window.id}`, 'Right', v3(p.x + 0.28, p.y - 0.32, p.z + 0.02), { angularRadius: 0.035 });
+        addTarget(targets, `window:snap-left:${window.id}`, 'Left', v3(p.x, p.y - 0.32, p.z + 0.02), { angularRadius: 0.035, disabled: window.pinned });
+        addTarget(targets, `window:snap-center:${window.id}`, 'Centre', v3(p.x + 0.14, p.y - 0.32, p.z + 0.02), { angularRadius: 0.035, disabled: window.pinned });
+        addTarget(targets, `window:snap-right:${window.id}`, 'Right', v3(p.x + 0.28, p.y - 0.32, p.z + 0.02), { angularRadius: 0.035, disabled: window.pinned });
       }
     }
 
-    return targets;
+    return targets.map((target) => {
+      if (!target.id.startsWith('window:move:')) return target;
+      const id = target.id.slice('window:move:'.length);
+      return { ...target, disabled: Boolean(state.windows.windows.get(id)?.pinned) };
+    });
   }
 
   _drawEnvironment(ctx, width, height, eye, state) {

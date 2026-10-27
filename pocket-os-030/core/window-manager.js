@@ -48,19 +48,23 @@ export class WindowManager {
     const window = this.windows.get(id);
     if (!window) return false;
     window.pinned = !window.pinned;
+    if (window.pinned && this.manipulation?.type === 'move' && this.manipulation.id === id) {
+      this.endManipulation();
+    }
     return window.pinned;
   }
 
   snap(id, slot) {
     const window = this.windows.get(id);
     const position = SNAP[slot];
-    if (!window || !position) return false;
+    if (!window || !position || window.pinned) return false;
     window.position = { ...position };
     return true;
   }
 
   beginMove(id) {
-    if (!this.windows.has(id)) return false;
+    const window = this.windows.get(id);
+    if (!window || window.pinned) return false;
     this.manipulation = { type: 'move', id };
     return true;
   }
@@ -81,6 +85,7 @@ export class WindowManager {
     if (!this.manipulation) return false;
     const window = this.windows.get(this.manipulation.id);
     if (!window) return false;
+    if (this.manipulation.type === 'move' && window.pinned) return false;
     if (this.manipulation.type === 'move' && aimDirection) {
       const depth = clamp(-window.position.z, 0.85, 2.4);
       const denom = Math.max(0.2, -aimDirection.z);

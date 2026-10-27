@@ -61,3 +61,10 @@ test('C2 import specifiers resolve to repo files', () => {
     assert.ok(fs.existsSync(resolved), 'missing browser module ' + specifier);
   }
 });
+
+test('pagehide retains selected media on Safari bfcache navigation', () => {
+  const source = fs.readFileSync(path.join(root, 'app-c2.js'), 'utf8');
+  assert.match(source, /addEventListener\('pagehide', \(event\)/);
+  assert.ok(source.includes('if (!event.persisted) this._releaseObjectUrls()'));
+  assert.ok(source.includes('for (const previous of this.media.images) this._revokeObjectUrl(previous.url)'));
+});
