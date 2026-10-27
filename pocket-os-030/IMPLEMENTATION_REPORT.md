@@ -1,296 +1,65 @@
-# Pocket VR Spatial OS 0.3 Candidate — Implementation Report
+# Pocket VR 1.0 RC1 — implementation report
 
-## Release identity
+Branch: `agent/pocket-spatial-os-030-c2`. Baseline: `e28e4b2`.
+Build identity: `pocket-vr-1.0.0-rc.1`, visible as **Pocket VR 1.0 RC1**.
+The original root and legacy entry points are retained. No service worker was added.
 
-- Build: `pocket-spatial-os-0.3.0-candidate.1`
-- Visible label: `POCKET OS 0.3 C1`
-- Development branch: `agent/pocket-spatial-os-030`
-- Protected starting commit: `799cb14511f00f9bb1f2c764866acc4e8d9eb471`
-- Production root at the start of this work: Hand Fix 0.2.2 / Safari Timer
-- Candidate directory: `pocket-os-030/`
-- Service worker registration: **none**
+## What changed
 
-## Why this candidate exists
+- Welcome offers screen or headset use. Home starts immediately without camera, model, audio, fullscreen or motion permission completion. Optional motion has a 3.5 s wait; camera has 10 s; hand initialization has 12 s. Local module failures expose Reload. Three consecutive frame failures expose recovery.
+- A real look/select tutorial has Skip and Replay. Landscape guidance, recentering, bounded view alignment and Reset are available. Hold the screen for Home; the dock offers Home, Library, Controls and Recenter. Controls includes Exit.
+- A single Canvas renderer replaces the candidate's renderer patch chain. `scene/layout.js` supplies the visible bounds and targets. Reused original pictograms, shared design tokens, readable per-eye labels, restrained sage/teal materials and composed Studio, Observatory and Ocean scenes provide a coherent identity. No WebGL migration or new runtime framework was necessary.
+- Input updates aim before pinch/dwell. Removed/disabled/occluded targets lose focus immediately. A deliberate pinch has one controlling hand; confidence/safety gates, loss/reacquisition rearming and original-target holds prevent duplicate or inherited interactions. Pointer cancellation is not a tap. Native fields isolate shortcuts.
+- Library has native search, All/Favourites/Recent/Media/Utility/Labs, actual recency ordering, add/remove saved apps, safe persistence, empty states and pagination covering the full catalogue.
+- Window transforms change the actual app surface and hit bounds. Arrange exposes move, resize, pin, snap, smaller/larger and close. Switcher previews are explicitly labelled and include useful time/photo information. Budget: Home plus at most two apps; inactive media pauses; expensive scenes render only when active. There are no fake secondary app windows.
+- Cinema follows load/data/play/wait/pause/end/error events, preserves aspect and eye crop, has trusted playback recovery, timeline/seek, screen size/distance, hide/show controls, room brightness and honest system-volume guidance. Unsupported curved-screen and software-volume controls are absent. A tiny original H.264 fixture and SVG fallback verify eye mapping.
+- Gallery reaches every photo in a batch of up to 48, preserves aspect/orientation through browser image decoding, reports load/decode errors and supports grid/single/slideshow. Decode is serialized, visible images are downsampled to at most 1024×768, and only the current six tiles or current/next image are retained. One full source image may temporarily exist during decode. New selection/close revokes URLs; selection is not claimed to survive reload.
+- Music uses a real analyser, one shared AudioContext, trusted activation/resume, actual playback/error state, three visual modes and no microphone request.
+- Focus catches up elapsed monotonic time after throttling/backgrounding, explicitly starts/pauses/resets and signals completion on resume if background execution was suspended. Clock uses local device time. Settings validates storage, supports appearance/accessibility/performance and resets only Pocket preferences.
+- Planetarium has selectable planets, descriptions and time controls labelled illustrative. Portal changes into real composed destinations and returns. Hologram has distinct procedural ship/orb/cube studies. Mini Worlds has inspectable city/island/forest dioramas. Arcade has instructions, a 30 s round, one-hit scoring, results and restart. Labs remain explicitly experimental procedural experiences.
+- Camera, tracker, wake lock and audio suspend on hide/exit. A late permission result is stopped before video attachment. Model completion after cancellation is disposed. Safari's canonical tracker and continuous timer path are preserved. Existing inference is serial on the main thread; the worker path already enforces one in-flight frame.
+- The shared adaptive filter now responds to sustained displacement after its raw derivative settles. Invalid orientation events no longer count as sensor samples. Shared regressions pass.
 
-The primary operating model has been changed from hand-position aiming to an intentional head-aim interaction system:
+## Validation and evidence
 
-**LOOK → TARGET → PINCH / TAP → SELECT**
+Baseline: 56/56 candidate tests; 28/29 shared tracking tests. Both baseline screenshots are saved separately.
 
-Precise hand XYZ data is now visual/experimental input rather than the authoritative pointer for normal Pocket VR navigation.
+Final commands (from repository root unless noted):
 
-## Architecture implemented
+```sh
+node --test pocket-os-030/tests/*.test.js
+node --test pocket-vr-next/tests/*.test.*
+cd pocket-os-030
+node scripts/check.mjs
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm exec playwright install chromium webkit
+node scripts/serve.mjs
+# In another terminal, same directory:
+node scripts/browser-qa.cjs
+node scripts/build.mjs
+```
 
-### HeadAimController
+On this Windows workstation the browser command used `POCKET_BROWSER_CHANNEL=msedge` for Chromium and `PLAYWRIGHT_BROWSERS_PATH` for the downloaded WebKit binary. The exact run output accompanies the handoff. Playwright 1.62.1 and Prettier 3.6.2 are pinned in `pnpm-lock.yaml`. Browser QA uses real pointer/native input actions, with read-only coordinate/state inspection enabled only by `?qa=1`. Mocked API/lifecycle cases are identified in the results. Physical sensors are not simulated evidence of hardware acceptance.
 
-- centre-view spatial targeting
-- angular target tolerance
-- target priority scoring
-- target distance contribution
-- target-size assistance
-- persistence/stickiness hysteresis
-- no visible camera snapping
-
-### InputManager
-
-Normalises:
-
-- head aim
-- left-hand pinch
-- right-hand pinch
-- pinch hold
-- pinch release
-- touch confirmation
-- dwell selection
-- keyboard development controls
-- Gamepad API buttons/axes
-
-into standard interaction actions.
-
-### AppManager
-
-- app manifests
-- launch/focus/close
-- recents
-- favourites
-- maximum running-app budget
-- transient system surfaces which do not consume normal app slots
-
-### WindowManager
-
-- floating window state
-- focus
-- close
-- snap positions
-- gaze/head-driven move mode
-- bounded resize mode
-- secondary-window performance gating
-
-### CameraCoordinator
-
-- one camera owner for the candidate runtime
-- explicit camera state
-- tracking/passthrough state transitions
-- camera failure remains non-fatal to the OS
-
-The current browser implementation uses the same available rear camera stream for tracking/passthrough where possible rather than claiming unsupported simultaneous-camera behaviour.
-
-### PerformanceManager
-
-- render FPS sampling
-- Quality / Balanced / Performance modes
-- automatic quality reduction after sustained low FPS
-- DPR cap reduction before changing interaction semantics
-- particle and secondary-window reductions in Performance mode
-
-### NotificationCenter + SystemAudio
-
-- short non-stacking spatial notification capsules
-- restrained target/select/open/back audio feedback
-- audio can be disabled
-
-## Spatial operating system surfaces
-
-Implemented:
-
-- Home
-- compact Pocket Dock
-- App Library
-- Quick Settings
-- App Switcher
-- status capsule
-- premium centre reticle states
-- recent apps
-- favourites
-- bounded multitasking
-- secondary spatial windows
-- settings
-- system information
-- Tracking Lab
-- Labs
-
-Normal HUD intentionally remains small.
-
-## Flagship experiences implemented
-
-### Pocket Cinema
-
-- browser-compatible local video picker
-- 2D playback
-- SBS left/right playback
-- SBS right/left playback
-- independent source crop for each eye
-- play/pause
-- ±10 second seek
-- volume cycle
-- screen size
-- screen distance
-- flat screen
-- lightweight curved screen strips
-- controls can be hidden while watching
+Candidate unit tests: **68/68**. Shared tracking: **29/29**. All candidate JavaScript syntax checked. Browser flows and captured renders cover cold entry/tutorial, no camera request, search, persistence, 13-photo paging/cache bounds, window transforms/pinning, media errors, H.264 and WAV playback in Chromium, the spatial experiences, real stereo pixel mapping in both directions, viewport changes, pointer cancellation, module recovery and pending-motion fallback. Screenshot names and exact outcomes are in `browser-results.txt` and the QA folder.
 
-### Planetarium
+**Windows WebKit media limitation:** this engine advertises codecs but rejects the committed H.264 video and generated WAV. Its tests validate the visible error paths and static stereo fallback, not successful media playback. Safari on the actual iPhone remains an acceptance gate.
 
-- Sun
-- Mercury, Venus, Earth, Mars, Jupiter and Saturn
-- animated orbital positions
-- time speed control
-- pause/reset
-- gaze-selectable planets
-- planet focus transition and information
-
-This is a lightweight educational/procedural representation, not an astronomical ephemeris.
-
-### Portal
-
-- spatial portal gallery
-- Deep Space
-- Ocean
-- Dreamscape
-- smooth visual transition state
-- simple discoveries
-
-### Hologram Lab
-
-- stereo-projected model view
-- rotation
-- zoom
-- model cycling
-- auto rotate
-- wireframe option
-- direct hand manipulation remains experimental rather than required
-
-### Arcade — Target Rush
-
-- gaze-targeted spatial orbs
-- pinch/touch confirmation
-- score
-- respawning targets
-- restart
-
-### Music Room
-
-- browser-compatible local audio
-- Web Audio analyser where available
-- Rings, Tunnel and Calm visual modes
-- performance-limited visualisation
-
-### Passthrough / Quick Peek foundation
-
-- live camera background
-- Pocket VR HUD over camera
-- brightness overlay control
-- lightweight visual effects
-- Quick Peek state
-- explicit return to VR
-- no claim of room reconstruction, physical anchors or safety certification
-
-### Mini Worlds
-
-- multiple floating diorama targets
-- gaze selection
-- expanded environment state
-- return to the world shelf
-
-## Additional apps
-
-- Gallery with local image picker
-- Browser launcher using the normal iPhone keyboard/address input and external Safari opening
-- Clock
-- Settings
-- Tracking Lab
-- Labs
-- System Info
-
-External websites are not falsely assumed to be iframe-embeddable.
-
-## Hand tracking policy
-
-Tracked hands remain useful for:
-
-- pinch recognition
-- hand presence
-- simplified hand visualisation
-- experimental features
-
-Hand position no longer drives the primary navigation reticle.
-
-Either hand may generate the primary pinch confirmation.
-
-If hand tracking is missing, screen tap can still activate the current head target.
-
-## Automated validation
-
-GitHub Actions workflow: `Pocket OS 0.3 Candidate`
-
-PR CI run #2 completed successfully:
-
-- Syntax check: **PASS**
-- Regression tests: **PASS**
-
-The regression suite currently covers:
-
-- centre head targeting
-- disabled target exclusion
-- head target angular rejection
-- target priority
-- target stickiness
-- single-select pinch behaviour
-- right-hand-only pinch
-- pinch hold
-- tracking-loss release
-- touch confirmation
-- dwell confirmation
-- keyboard SELECT mapping
-- app launch/recents
-- transient system surfaces
-- system back behaviour
-- running-app budget
-- window snapping
-- bounded head-driven window movement
-- resize limits
-- 2D cinema eye mapping
-- SBS-LR eye mapping
-- SBS-RL eye mapping
-- SBS aspect handling
-- cinema format cycling
-- flagship app catalogue
-- compact dock constraints
-- build-label consistency
-- absence of candidate service-worker registration
-- GitHub Pages-safe relative paths
-
-## What has NOT been claimed as complete
-
-The following require physical iPhone Safari/headset testing and are not marked as verified yet:
-
-- perceived head-aim latency on iPhone 17
-- real pinch reliability after extended use
-- camera thermal behaviour
-- Safari permission edge cases
-- actual headset optical comfort/IPD fit
-- local video codec compatibility for arbitrary user files
-- sustained media + ML + rendering thermal performance
-- Add to Home Screen behaviour
-- real-world passthrough camera latency
-- whether the existing historical `/chatg/` service-worker state on a previously contaminated device must be manually cleared
-
-## Release safety
-
-The production root was intentionally not modified by candidate development.
-
-The safe promotion strategy is:
-
-1. merge the additive `pocket-os-030/` candidate path
-2. test that exact path on the real iPhone
-3. fix candidate-only issues
-4. only after physical acceptance, consider changing the root entry point
-
-## Next engineering priorities
-
-1. Physical iPhone acceptance testing
-2. Tune head-target angular tolerance and stickiness from real headset data
-3. Tune pinch thresholds only if necessary; do not return to hand-position aiming
-4. Validate long-session thermal behaviour
-5. Improve camera switching only where Safari exposes reliable behaviour
-6. Expand flagship apps after controls remain stable
-7. Keep advanced hand-position experiments isolated in Labs
+## Build and deployment
+
+`node scripts/build.mjs` produces `pocket-os-030/dist/` containing the candidate plus the required sibling `pocket-vr-next/core` and `tracking` paths. Serve/upload the **whole dist folder**, retaining both siblings. It is a static build: no account, paid backend, Xcode or installation is required.
+
+The existing HTTPS candidate URL was checked on 2026-10-27 and returned HTTP 200 with title `Pocket VR - POCKET OS 0.3 C1-H1-I1`. It is **not this RC**. Remote heads still matched the inspected baseline before committing. The repository has test workflows and main-only Pages smoke checking, but no configured branch preview deployment. This change adds downloadable CI evidence/static artifacts; it does not change production hosting or merge main.
+
+Minimal independent HTTPS setup: download/extract the static artifact; create a separate user-owned static-host site or preview repository; publish its dist root unchanged; open `/pocket-os-030/`. A GitHub Pages preview repository can use a `gh-pages` branch with those extracted files at its root and Pages set to that branch. Do not redirect the existing production repository's Pages settings. Once published, verify the visible RC1 label, both eye canvases, JavaScript/SVG/MP4 MIME types, no service-worker controller and direct nested URL loading before device acceptance.
+
+## Remaining limitations
+
+Physical motion orientation/latency in both landscapes, headset optics/comfort, pinch reliability, Safari codec/trusted activation behavior, real camera interruptions, thermal endurance and 10-minute mixed tracking/media sessions have not been tested here. Canvas surfaces use world-projected centres and conservative billboard presentation rather than full perspective-correct WebGL meshes. Tracking still depends on optional external model/CDN downloads. No spatial anchors, room reconstruction, DRM embedding or navigation-safety claims are made. No HTTPS RC preview is claimed until an isolated host is configured and checked.
+
+## API references checked
+
+- https://www.w3.org/TR/orientation-event/ — trusted permission requests and actual sample handling.
+- https://w3c.github.io/mediacapture-main/ — permission requests and stream/track lifetime.
+- https://html.spec.whatwg.org/multipage/media.html — media readiness/events and play promises.
+- https://playwright.dev/docs/browsers — engine-specific browser installation and codec limits.

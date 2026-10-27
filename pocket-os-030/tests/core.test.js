@@ -257,6 +257,6 @@ test('candidate entry never registers a service worker', () => {
 test('candidate entry uses GitHub Pages-safe relative asset paths', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(html.includes('src="./app.js'));
-  assert.ok(html.includes('href="./styles.css'));
+  assert.ok(html.includes('href="./styles-rc.css'));
   assert.equal(/(?:src|href)="\/(?!\/)/.test(html), false);
 });

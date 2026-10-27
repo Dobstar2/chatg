@@ -2,7 +2,7 @@ import { angularOffset, clamp } from './math.js';
 
 export class HeadAimController {
   constructor({ maxAngleDeg = 11, stickinessMs = 180, assistStrength = 0.75 } = {}) {
-    this.maxAngle = maxAngleDeg * Math.PI / 180;
+    this.maxAngle = (maxAngleDeg * Math.PI) / 180;
     this.stickinessMs = stickinessMs;
     this.assistStrength = assistStrength;
     this.currentTarget = null;
@@ -13,7 +13,7 @@ export class HeadAimController {
   }
 
   setOptions({ maxAngleDeg, stickinessMs, assistStrength } = {}) {
-    if (Number.isFinite(maxAngleDeg)) this.maxAngle = clamp(maxAngleDeg, 3, 20) * Math.PI / 180;
+    if (Number.isFinite(maxAngleDeg)) this.maxAngle = (clamp(maxAngleDeg, 3, 20) * Math.PI) / 180;
     if (Number.isFinite(stickinessMs)) this.stickinessMs = clamp(stickinessMs, 40, 600);
     if (Number.isFinite(assistStrength)) this.assistStrength = clamp(assistStrength, 0, 1.5);
   }
@@ -21,7 +21,14 @@ export class HeadAimController {
   update(headOrientation, targets, now = performance.now()) {
     const candidates = [];
     for (const target of targets || []) {
-      if (!target || target.disabled || target.visible === false || !target.position) continue;
+      if (
+        !target ||
+        target.disabled ||
+        target.visible === false ||
+        target.occluded ||
+        !target.position
+      )
+        continue;
       const offset = angularOffset(target.position, headOrientation);
       const angularRadius = Math.max(0.008, Number(target.angularRadius) || 0.035);
       const allowed = this.maxAngle + angularRadius * this.assistStrength;
@@ -40,17 +47,16 @@ export class HeadAimController {
 
     candidates.sort((a, b) => a.score - b.score);
     let best = candidates[0] || null;
-    const currentCandidate = candidates.find((entry) => entry.target.id === this.currentTarget?.id) || null;
+    const currentCandidate =
+      candidates.find((entry) => entry.target.id === this.currentTarget?.id) || null;
 
     if (this.currentTarget && currentCandidate) {
       const targetAge = now - this.targetSince;
-      const challengerIsClearlyBetter = best && best.target.id !== this.currentTarget.id
-        && best.score + 0.06 < currentCandidate.score;
+      const challengerIsClearlyBetter =
+        best &&
+        best.target.id !== this.currentTarget.id &&
+        best.score + 0.06 < currentCandidate.score;
       if (!challengerIsClearlyBetter || targetAge < this.stickinessMs) best = currentCandidate;
-    }
-
-    if (!best && this.currentTarget && now - this.lastSeenAt < this.stickinessMs * 0.6) {
-      return this._snapshot(this.currentTarget, this.currentScore, now);
     }
 
     if (best) {

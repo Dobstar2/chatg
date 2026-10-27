@@ -1,4 +1,5 @@
 export const APP_MANIFESTS = [
+  {id:'alignment',name:'View alignment',category:'System',windowType:'system'},
   { id: 'home', name: 'Home', icon: 'H', category: 'System', windowType: 'system', supportsVirtual: true, supportsPassthrough: true, supportsMultitasking: false, preferredControls: ['head', 'pinch', 'touch'] },
   { id: 'quick-settings', name: 'Quick Settings', icon: 'Q', category: 'System', windowType: 'system', supportsVirtual: true, supportsPassthrough: true, supportsMultitasking: false, preferredControls: ['head', 'pinch', 'touch'] },
   { id: 'switcher', name: 'Switcher', icon: 'SW', category: 'System', windowType: 'system', supportsVirtual: true, supportsPassthrough: true, supportsMultitasking: false, preferredControls: ['head', 'pinch', 'touch'] },
@@ -6,10 +7,10 @@ export const APP_MANIFESTS = [
   { id: 'cinema', name: 'Cinema', icon: 'C', category: 'Featured', windowType: 'immersive', supportsVirtual: true, supportsPassthrough: false, supportsMultitasking: false, preferredControls: ['head', 'pinch', 'touch'], requiredCapabilities: ['video'] },
   { id: 'planetarium', name: 'Planetarium', icon: 'P', category: 'Featured', windowType: 'immersive', supportsVirtual: true, supportsPassthrough: false, supportsMultitasking: false, preferredControls: ['head', 'pinch', 'touch'] },
   { id: 'portal', name: 'Portal', icon: 'O', category: 'Featured', windowType: 'immersive', supportsVirtual: true, supportsPassthrough: true, supportsMultitasking: false, preferredControls: ['head', 'pinch', 'touch'] },
-  { id: 'hologram', name: 'Hologram Lab', icon: '3D', category: 'Featured', windowType: 'immersive', supportsVirtual: true, supportsPassthrough: true, supportsMultitasking: true, preferredControls: ['head', 'pinch', 'touch'] },
+  { id: 'hologram', name: 'Hologram Lab', icon: '3D', category: 'Labs', windowType: 'immersive', supportsVirtual: true, supportsPassthrough: true, supportsMultitasking: true, preferredControls: ['head', 'pinch', 'touch'] },
   { id: 'arcade', name: 'Arcade', icon: 'A', category: 'Featured', windowType: 'immersive', supportsVirtual: true, supportsPassthrough: false, supportsMultitasking: false, preferredControls: ['head', 'pinch', 'touch'] },
   { id: 'music', name: 'Music Room', icon: 'M', category: 'Featured', windowType: 'immersive', supportsVirtual: true, supportsPassthrough: false, supportsMultitasking: false, preferredControls: ['head', 'pinch', 'touch'], requiredCapabilities: ['audio'] },
-  { id: 'mini-worlds', name: 'Mini Worlds', icon: 'W', category: 'Featured', windowType: 'immersive', supportsVirtual: true, supportsPassthrough: false, supportsMultitasking: false, preferredControls: ['head', 'pinch', 'touch'] },
+  { id: 'mini-worlds', name: 'Mini Worlds', icon: 'W', category: 'Labs', windowType: 'immersive', supportsVirtual: true, supportsPassthrough: false, supportsMultitasking: false, preferredControls: ['head', 'pinch', 'touch'] },
   { id: 'passthrough', name: 'Passthrough', icon: 'AR', category: 'Featured', windowType: 'immersive', supportsVirtual: true, supportsPassthrough: true, supportsMultitasking: false, preferredControls: ['head', 'pinch', 'touch'], requiredCapabilities: ['camera'] },
   { id: 'gallery', name: 'Gallery', icon: 'G', category: 'Media', windowType: 'window', supportsVirtual: true, supportsPassthrough: true, supportsMultitasking: true, preferredControls: ['head', 'pinch', 'touch'], requiredCapabilities: ['image'] },
   { id: 'browser', name: 'Browser', icon: 'B', category: 'Utility', windowType: 'window', supportsVirtual: true, supportsPassthrough: true, supportsMultitasking: true, preferredControls: ['head', 'pinch', 'touch'] },

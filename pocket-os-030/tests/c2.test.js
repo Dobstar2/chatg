@@ -115,7 +115,7 @@ test('C2 visible version and authoritative BUILD_SHORT match', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const match = version.match(/BUILD_SHORT\s*=\s*'([^']+)'/);
   assert.ok(match);
-  assert.equal(match[1], 'POCKET OS 0.3 C2');
+  assert.equal(match[1], 'Pocket VR 1.0 RC1');
   assert.ok(html.includes(match[1]));
 });
 

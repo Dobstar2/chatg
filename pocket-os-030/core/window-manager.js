@@ -34,6 +34,7 @@ export class WindowManager {
   }
 
   close(id) {
+    if (this.manipulation?.id === id) this.endManipulation();
     this.windows.delete(id);
     if (this.focusedId === id) this.focusedId = [...this.windows.keys()].at(-1) || null;
   }
@@ -71,7 +72,7 @@ export class WindowManager {
 
   beginResize(id, aimDirection = { y: 0 }) {
     const window = this.windows.get(id);
-    if (!window) return false;
+    if (!window || window.pinned) return false;
     this.manipulation = {
       type: 'resize',
       id,
@@ -89,8 +90,8 @@ export class WindowManager {
     if (this.manipulation.type === 'move' && aimDirection) {
       const depth = clamp(-window.position.z, 0.85, 2.4);
       const denom = Math.max(0.2, -aimDirection.z);
-      window.position.x = clamp(aimDirection.x / denom * depth, -1.2, 1.2);
-      window.position.y = clamp(aimDirection.y / denom * depth, -0.65, 0.8);
+      window.position.x = clamp((aimDirection.x / denom) * depth, -1.2, 1.2);
+      window.position.y = clamp((aimDirection.y / denom) * depth, -0.65, 0.8);
     } else if (this.manipulation.type === 'resize') {
       if (aimDirection) {
         const deltaY = (Number(aimDirection.y) || 0) - this.manipulation.startAimY;

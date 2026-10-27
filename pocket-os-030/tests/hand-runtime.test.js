@@ -31,7 +31,7 @@ test('Safari continuous and MediaPipe runtime patches target the canonical hand 
 test('hand fix identity survives visual release suffixes and no service worker is registered', () => {
   const html = read('index.html');
   const version = read('core/version.js');
-  assert.ok(html.includes('POCKET OS 0.3 C2'));
-  assert.match(version, /BUILD_SHORT\s*=\s*'POCKET OS 0\.3 C2'/);
+  assert.ok(html.includes('Pocket VR 1.0 RC1'));
+  assert.match(version, /BUILD_SHORT\s*=\s*'Pocket VR 1\.0 RC1'/);
   assert.equal(/serviceWorker\s*\.\s*register|navigator\.serviceWorker\.register/.test(html), false);
 });

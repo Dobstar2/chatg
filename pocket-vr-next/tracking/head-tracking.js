@@ -73,6 +73,7 @@ export class HeadTrackingManager extends EventTarget {
   }
 
   _onOrientation(event) {
+    if (!Number.isFinite(event.beta) || !Number.isFinite(event.gamma)) return;
     const alpha = Number.isFinite(event.alpha) ? event.alpha : 0;
     const beta = Number.isFinite(event.beta) ? event.beta : 0;
     const gamma = Number.isFinite(event.gamma) ? event.gamma : 0;

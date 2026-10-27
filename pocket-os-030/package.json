@@ -1,9 +1,20 @@
 {
   "name": "pocket-vr-spatial-os-candidate",
+  "version": "1.0.0-rc.1",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test ./tests/*.test.js",
-    "check": "node --check app.js && node --check app-c2.js && node --check scene/renderer.js && node --check scene/renderer-c2-base.js && node --check scene/renderer-c2.js && node --check scene/renderer-icons-v1.js && node --check scene/renderer-icon-patch-init.js && node --check core/focus-timer.js && node --check core/input-manager.js && node --check core/preferences.js && node --check core/library-search.js"
-  }
+    "check": "node scripts/check.mjs",
+    "test:browser": "node scripts/browser-qa.cjs",
+    "fixture": "node scripts/make-fixture.cjs",
+    "serve": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs",
+    "test:recovery": "node scripts/recovery-qa.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1",
+    "prettier": "3.6.2"
+  },
+  "packageManager": "pnpm@11.25.0"
 }

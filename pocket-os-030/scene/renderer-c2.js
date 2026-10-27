@@ -177,5 +177,4 @@ export class SpatialRenderer extends SpatialRendererC2Base {
     super._drawSecondaryWindows(ctx, eye, state);
   }
 
-
 }

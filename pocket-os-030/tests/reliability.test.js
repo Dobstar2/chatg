@@ -43,10 +43,10 @@ test('paused focus does not count elapsed time', () => {
   assert.equal(focus.remainingMs, 11000);
 });
 
-test('C2 integrates current icon patch and synchronous native search focus', () => {
+test('RC uses the direct renderer interface and synchronous native search focus', () => {
   const app = fs.readFileSync(path.join(root, 'app-c2.js'), 'utf8');
   const entry = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
-  assert.ok(app.includes("import './scene/renderer-icon-patch-init.js'"));
+  assert.ok(app.includes("from './scene/spatial-renderer.js'"));
   assert.match(app, /_showLibrarySearch\(\) \{[\s\S]*?this\.elements\.searchInput\.focus\(\);/);
   assert.ok(!app.includes('requestAnimationFrame(() => this.elements.searchInput.focus())'));
   assert.ok(entry.includes('./app-c2.js'));
@@ -65,6 +65,6 @@ test('C2 import specifiers resolve to repo files', () => {
 test('pagehide retains selected media on Safari bfcache navigation', () => {
   const source = fs.readFileSync(path.join(root, 'app-c2.js'), 'utf8');
   assert.match(source, /addEventListener\('pagehide', \(event\)/);
-  assert.ok(source.includes('if (!event.persisted) this._releaseObjectUrls()'));
-  assert.ok(source.includes('for (const previous of this.media.images) this._revokeObjectUrl(previous.url)'));
+  assert.match(source, /if \(!event.persisted\) \{\s*this\._releaseObjectUrls\(\)/);
+  assert.ok(source.includes('this.galleryStore.replace(files)'));
 });

@@ -36,7 +36,7 @@ export class OneEuroScalar {
     const derivativeAlpha = smoothingAlpha(this.derivativeCutoff, dt);
     this.derivative += (rawDerivative - this.derivative) * derivativeAlpha;
 
-    const cutoff = this.minCutoff + this.beta * Math.abs(this.derivative);
+    const cutoff = this.minCutoff + this.beta * Math.max(Math.abs(this.derivative), Math.abs(value - this.value) / Math.max(0.05, dt));
     let alpha = smoothingAlpha(cutoff, dt);
     // Poor observations should influence the reliable pose less, without adding
     // latency when confidence is high.

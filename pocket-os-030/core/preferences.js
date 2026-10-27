@@ -13,6 +13,9 @@ export const DEFAULT_PREFERENCES = Object.freeze({
   reduceMotion: false,
   reduceTransparency: false,
   highContrast: false,
+  viewScale: 1,
+  eyeSeparation: 0.064,
+  performanceMode: 'balanced',
 });
 
 function clamp(value, min, max) {
@@ -21,27 +24,45 @@ function clamp(value, min, max) {
 }
 
 export function sanitizePreferences(value = {}) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) value = {};
   const allowedSelection = new Set(['pinch', 'touch', 'dwell']);
   const allowedEnvironment = new Set(['glass', 'dark', 'space', 'ocean', 'void', 'minimal']);
   return {
-    selectionMethod: allowedSelection.has(value.selectionMethod) ? value.selectionMethod : DEFAULT_PREFERENCES.selectionMethod,
+    selectionMethod: allowedSelection.has(value.selectionMethod)
+      ? value.selectionMethod
+      : DEFAULT_PREFERENCES.selectionMethod,
     dwell: Boolean(value.dwell),
     assist: clamp(value.assist ?? DEFAULT_PREFERENCES.assist, 0.25, 1.4),
     stickinessMs: clamp(value.stickinessMs ?? DEFAULT_PREFERENCES.stickinessMs, 60, 480),
     holdMs: clamp(value.holdMs ?? DEFAULT_PREFERENCES.holdMs, 350, 1200),
     experimentalHands: Boolean(value.experimentalHands),
     uiSound: value.uiSound !== false,
-    environment: allowedEnvironment.has(value.environment) ? value.environment : DEFAULT_PREFERENCES.environment,
-    worldBrightness: clamp(value.worldBrightness ?? DEFAULT_PREFERENCES.worldBrightness, 0.45, 1.15),
+    environment: allowedEnvironment.has(value.environment)
+      ? value.environment
+      : DEFAULT_PREFERENCES.environment,
+    worldBrightness: clamp(
+      value.worldBrightness ?? DEFAULT_PREFERENCES.worldBrightness,
+      0.45,
+      1.15,
+    ),
     reduceMotion: Boolean(value.reduceMotion),
     reduceTransparency: Boolean(value.reduceTransparency),
     highContrast: Boolean(value.highContrast),
+    viewScale: clamp(value.viewScale ?? 1, 0.9, 1.1),
+    eyeSeparation: clamp(value.eyeSeparation ?? 0.064, 0.054, 0.072),
+    performanceMode: ['quality', 'balanced', 'performance'].includes(value.performanceMode)
+      ? value.performanceMode
+      : 'balanced',
   };
 }
 
 export class PreferenceStore {
-  constructor(storage = globalThis.localStorage) {
-    this.storage = storage;
+  constructor(storage) {
+    try {
+      this.storage = storage === undefined ? globalThis.localStorage : storage;
+    } catch (_) {
+      this.storage = null;
+    }
   }
 
   load() {
@@ -56,12 +77,16 @@ export class PreferenceStore {
 
   save(value) {
     const safe = sanitizePreferences(value);
-    try { this.storage?.setItem?.(STORAGE_KEY, JSON.stringify(safe)); } catch (_) {}
+    try {
+      this.storage?.setItem?.(STORAGE_KEY, JSON.stringify(safe));
+    } catch (_) {}
     return safe;
   }
 
   clear() {
-    try { this.storage?.removeItem?.(STORAGE_KEY); } catch (_) {}
+    try {
+      this.storage?.removeItem?.(STORAGE_KEY);
+    } catch (_) {}
   }
 }
 

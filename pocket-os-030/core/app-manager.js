@@ -9,9 +9,21 @@ export class AppManager extends EventTarget {
     this.activeAppId = 'home';
     this.running = ['home'];
     this.recents = [];
-    this.favourites = new Set(['cinema', 'planetarium', 'portal', 'arcade']);
+    this.favourites = new Set(['cinema', 'gallery', 'music', 'focus']);
     this.maxRunning = 3;
     this.previousActiveAppId = null;
+    try {
+      const saved = JSON.parse(globalThis.localStorage?.getItem('pocket-vr-library-v1') || '{}');
+      if (Array.isArray(saved.favourites))
+        this.favourites = new Set(
+          saved.favourites.filter((id) => this.manifests.has(id) && id !== 'home'),
+        );
+      if (Array.isArray(saved.recents))
+        this.recents = [...new Set(saved.recents.filter((id) => this.manifests.has(id)))].slice(
+          0,
+          8,
+        );
+    } catch (_) {}
   }
 
   get active() {
@@ -34,15 +46,18 @@ export class AppManager extends EventTarget {
       if (this.activeAppId !== id) this.previousActiveAppId = this.activeAppId;
     } else if (!this.running.includes(id)) {
       if (this.running.length >= this.maxRunning) {
-        const removable = this.running.find((runningId) => runningId !== 'home' && runningId !== this.activeAppId);
+        const removable = this.running.find(
+          (runningId) => runningId !== 'home' && runningId !== this.activeAppId,
+        );
         if (removable) this.close(removable, now);
       }
       this.running.push(id);
     }
     this.activeAppId = id;
-    if (id !== 'home') {
+    if (id !== 'home' && !isTransientSystem) {
       this.recents = [id, ...this.recents.filter((item) => item !== id)].slice(0, 8);
     }
+    this._save();
     emit(this, 'launch', { id, app, now });
     emit(this, 'focus', { id, app, now });
     return true;
@@ -56,6 +71,9 @@ export class AppManager extends EventTarget {
   focus(id, now = performance.now()) {
     if (!this.running.includes(id)) return false;
     this.activeAppId = id;
+    if (id !== 'home')
+      this.recents = [id, ...this.recents.filter((item) => item !== id)].slice(0, 8);
+    this._save();
     emit(this, 'focus', { id, app: this.manifests.get(id), now });
     return true;
   }
@@ -63,7 +81,11 @@ export class AppManager extends EventTarget {
   back(now = performance.now()) {
     if (this.activeAppId === 'home') return false;
     const active = this.manifests.get(this.activeAppId);
-    if (active?.windowType === 'system' && this.previousActiveAppId && this.running.includes(this.previousActiveAppId)) {
+    if (
+      active?.windowType === 'system' &&
+      this.previousActiveAppId &&
+      this.running.includes(this.previousActiveAppId)
+    ) {
       const target = this.previousActiveAppId;
       this.previousActiveAppId = null;
       return this.focus(target, now);
@@ -90,6 +112,16 @@ export class AppManager extends EventTarget {
     if (!this.manifests.has(id) || id === 'home') return false;
     if (this.favourites.has(id)) this.favourites.delete(id);
     else this.favourites.add(id);
+    this._save();
     return true;
+  }
+
+  _save() {
+    try {
+      globalThis.localStorage?.setItem(
+        'pocket-vr-library-v1',
+        JSON.stringify({ favourites: [...this.favourites], recents: this.recents }),
+      );
+    } catch (_) {}
   }
 }
