@@ -75,6 +75,7 @@ export class InputManager extends EventTarget {
     this.selectSource = 'pinch';
     this.aimSource = 'head';
     this.pinchLatch = new PinchLatch({ holdMs });
+    this.pinchTarget = null;
     this.dwellEnabled = false;
     this.dwellMs = dwellMs;
     this.dwellTargetId = null;
@@ -114,13 +115,16 @@ export class InputManager extends EventTarget {
     const events = this.pinchLatch.update(hands, now);
     for (const event of events) {
       if (event.type === 'start') {
+        // Capture the initial target so a held Move/Resize survives a gaze shift.
+        this.pinchTarget = this.aim?.target || null;
         if (this.selectionMethod === 'pinch' || this.selectionMethod === 'experimental-hands') {
           this._select('pinch', event.side, now);
         }
       } else if (event.type === 'hold') {
-        emit(this, INPUT_ACTIONS.HOLD, { target: this.aim?.target || null, side: event.side, source: 'pinch', now });
+        emit(this, INPUT_ACTIONS.HOLD, { target: this.pinchTarget, side: event.side, source: 'pinch', now });
       } else if (event.type === 'release') {
-        emit(this, INPUT_ACTIONS.RELEASE, { target: this.aim?.target || null, source: 'pinch', now });
+        emit(this, INPUT_ACTIONS.RELEASE, { target: this.pinchTarget, source: 'pinch', now });
+        this.pinchTarget = null;
       }
     }
   }

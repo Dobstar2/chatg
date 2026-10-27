@@ -1,3 +1,4 @@
+import './scene/renderer-icon-patch-init.js';
 import '../pocket-vr-next/tracking/worker-fastpath-v021.js?v=os030c2';
 import '../pocket-vr-next/tracking/mediapipe-runtime-v020.js?v=os030c2';
 import '../pocket-vr-next/tracking/safari-continuous-v022.js?v=os030c2';
@@ -14,6 +15,7 @@ import { NotificationCenter } from './core/notification-center.js';
 import { WindowManager } from './core/window-manager.js';
 import { CameraCoordinator } from './core/camera-coordinator.js';
 import { PreferenceStore, DEFAULT_PREFERENCES } from './core/preferences.js';
+import { advanceFocusTimer } from './core/focus-timer.js';
 import { APP_MANIFESTS } from './apps/catalog.js';
 import { SpatialRenderer } from './scene/renderer-c2.js';
 import { cycleCinemaFormat } from './core/media.js';
@@ -86,6 +88,8 @@ class PocketSpatialOSC2 {
 
     this.running = false;
     this.motionReady = false;
+    this.motionTracking = false;
+    this.lastHeadSampleAt = 0;
     this.handsReady = false;
     this.cameraInfo = null;
     this.lastFrameNow = performance.now();
@@ -177,7 +181,11 @@ class PocketSpatialOSC2 {
     this.input.addEventListener(INPUT_ACTIONS.BACK, () => this._goBack());
     this.input.addEventListener(INPUT_ACTIONS.MENU, () => this.appManager.launch('library'));
 
-    window.addEventListener('keydown', (event) => this.input.keyboardDown(event.code));
+    window.addEventListener('keydown', (event) => {
+      // Do not trigger VR shortcuts when typing in the native search/address bar.
+      if (event.target?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+      this.input.keyboardDown(event.code);
+    });
     window.addEventListener('keyup', (event) => this.input.keyboardUp(event.code));
     window.addEventListener('resize', () => this.renderer.resize(), { passive: true });
     window.addEventListener('orientationchange', () => setTimeout(() => this.renderer.resize(), 120), { passive: true });
@@ -192,6 +200,8 @@ class PocketSpatialOSC2 {
         this.renderer.resize();
       }
     });
+
+    this.head.addEventListener('pose', () => { this.lastHeadSampleAt = performance.now(); });
 
     this.hands.addEventListener('status', (event) => {
       if (String(event.detail).startsWith('ready')) this.handsReady = true;
@@ -745,7 +755,8 @@ class PocketSpatialOSC2 {
   _showLibrarySearch() {
     this.elements.searchInput.value = this.apps.library.query;
     this.elements.searchBar.classList.add('visible');
-    requestAnimationFrame(() => this.elements.searchInput.focus());
+    // iOS only opens its keyboard for synchronous focus inside a trusted tap.
+    this.elements.searchInput.focus();
   }
 
   _hideLibrarySearch() {
@@ -785,7 +796,7 @@ class PocketSpatialOSC2 {
     this.media.audio.src = url;
     this.media.audio.load();
     this.media.audioReady = true;
-    await this._ensureAnalyser();
+    try { await this._ensureAnalyser(); } catch (error) { console.warn('Audio analyser unavailable', error); }
     this.media.audio.play().then(() => { this.media.audioPlaying = true; }).catch(() => this._showTrustedAction('play-audio'));
     this.notifications.push(`Loaded ${file.name}`);
   }
@@ -851,7 +862,7 @@ class PocketSpatialOSC2 {
     const dx = event.clientX - t.lastX;
     const dy = event.clientY - t.lastY;
     if (Math.hypot(event.clientX - t.startX, event.clientY - t.startY) > 7) t.moved = true;
-    if (!this.motionReady && t.moved) {
+    if (!this.motionTracking && t.moved) {
       t.yaw -= dx * 0.0045;
       t.pitch = Math.max(-1.05, Math.min(1.05, t.pitch - dy * 0.0045));
     }
@@ -888,9 +899,13 @@ class PocketSpatialOSC2 {
   }
 
   _frame(now) {
+    try {
     const dt = Math.min(0.05, Math.max(0, (now - this.lastFrameNow) / 1000));
     this.lastFrameNow = now;
-    const headOrientation = this.motionReady ? this.head.getOrientation() : qFromYawPitch(this.touchLook.yaw, this.touchLook.pitch);
+    // Permission can succeed without sensor data (especially on desktop).
+    // Let touch drag take over when pose events stop arriving.
+    this.motionTracking = this.motionReady && this.lastHeadSampleAt > 0 && now - this.lastHeadSampleAt < 2000;
+    const headOrientation = this.motionTracking ? this.head.getOrientation() : qFromYawPitch(this.touchLook.yaw, this.touchLook.pitch);
     this.lastHeadOrientation = headOrientation;
 
     if (this.running) {
@@ -910,7 +925,7 @@ class PocketSpatialOSC2 {
       if (activeApp === 'planetarium' && !this.apps.planetarium.paused) this.apps.planetarium.simTime += dt * 1000 * this.apps.planetarium.timeScale;
       if (activeApp === 'hologram' && this.apps.hologram.auto && !this.settings.reduceMotion) this.apps.hologram.rotation += dt * 0.48;
       if (activeApp === 'music' && this.analyser && this.media.audioPlaying) this.analyser.getByteFrequencyData(this.media.spectrum);
-      this._updateFocus(now, dt);
+      this._updateFocus(now);
       this._updateGallerySlideshow(now);
 
       try { this.trackingMetrics = this.handsReady ? this.hands.getMetrics() : {}; } catch (_) { this.trackingMetrics = {}; }
@@ -944,16 +959,20 @@ class PocketSpatialOSC2 {
     state.notification = this.notifications.active(now);
     state.aim = aim;
     this.renderer.render(state);
-    requestAnimationFrame(this._frame);
+    } catch (error) {
+      // A transient rendering failure must not stop future animation frames.
+      if (now - (this.lastFrameErrorAt ?? -Infinity) > 3000) {
+        this.lastFrameErrorAt = now;
+        console.error('Pocket VR frame failed', error);
+        this.notifications.push('Display retrying - touch controls remain available', { kind: 'warning' });
+      }
+    } finally {
+      requestAnimationFrame(this._frame);
+    }
   }
 
-  _updateFocus(now, dt) {
-    const focus = this.apps.focus;
-    if (!focus.running || focus.remainingMs <= 0) return;
-    focus.remainingMs = Math.max(0, focus.remainingMs - dt * 1000);
-    focus.lastTickAt = now;
-    if (focus.remainingMs === 0) {
-      focus.running = false;
+  _updateFocus(now) {
+    if (advanceFocusTimer(this.apps.focus, now)) {
       this.notifications.push('Focus session complete', { duration: 3000 });
       this.systemAudio.notify();
     }
@@ -994,7 +1013,7 @@ class PocketSpatialOSC2 {
         right: right.tracked ? (right.quality || 'tracked') : 'lost',
       },
       pinchActive,
-      inputStatus: `${this.motionReady ? 'Aim Head' : 'Aim Drag'} | Select ${String(select).replace('-', ' ')}`,
+      inputStatus: `${this.motionTracking ? 'Aim Head' : 'Aim Drag'} | Select ${String(select).replace('-', ' ')}`,
       aim: null,
       notification: null,
       idle: now - this.lastInteractionAt > 7000,

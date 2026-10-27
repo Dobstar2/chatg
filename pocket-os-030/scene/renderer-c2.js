@@ -169,15 +169,9 @@ export class SpatialRenderer extends SpatialRendererC2Base {
   }
 
   _drawSecondaryWindows(ctx, eye, state) {
+    // getTargets() already exposes each control to C1's paint pass.
     super._drawSecondaryWindows(ctx, eye, state);
-    if (!this.performance.quality.secondaryWindows) return;
-    const targets = this.getTargets(state);
-    for (const window of state.windows.windows.values()) {
-      if (!window.visible || window.id === state.appManager.activeAppId) continue;
-      for (const target of targets.filter((item) => item.id.endsWith(`:${window.id}`)
-        && (item.id.startsWith('window:resize:') || item.id.startsWith('window:pin:') || item.id.startsWith('window:snap-')))) {
-        this._drawButtonTarget(ctx, eye, state, target, 0.13, 0.055);
-      }
-    }
   }
+
+
 }

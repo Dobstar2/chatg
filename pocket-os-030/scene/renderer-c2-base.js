@@ -254,12 +254,8 @@ export class SpatialRenderer extends SpatialRendererC1 {
   }
 
   _drawSecondaryWindows(ctx, eye, state) {
+    // getTargets() already exposes each control to C1's paint pass.
     super._drawSecondaryWindows(ctx, eye, state);
-    const id = state.windows.focusedId;
-    if (!id || id === state.appManager.activeAppId) return;
-    for (const target of this.getTargets(state).filter((item) => item.id.endsWith(`:${id}`) && (item.id.startsWith('window:resize:') || item.id.startsWith('window:pin:') || item.id.startsWith('window:snap-')))) {
-      this._drawButtonTarget(ctx, eye, state, target, 0.13, 0.055);
-    }
   }
 
   _drawReticle(ctx, width, height, state) {
