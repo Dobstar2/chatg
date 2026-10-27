@@ -10,7 +10,7 @@
 - Improved illustrative Planetarium, Portal destinations, Hologram models and Mini Worlds; kept Labs explicitly experimental.
 - Added resource/lifecycle cancellation, private/corrupt storage tolerance, pinned browser tooling, behavioural tests, browser QA/screenshots and reproducible static artifacts.
 - Corrected the shared adaptive filter's sustained-movement response and ignored invalid orientation samples.
-- Kept production entries and hosting settings unchanged. Physical acceptance and an isolated HTTPS deployment remain pending. Windows WebKit media decoding is unavailable in this environment; Chromium media and both-engine eye mapping were verified.
+- Kept production entries and hosting settings unchanged. Physical acceptance and an isolated HTTPS deployment remain pending. Linux CI verified H.264/WAV playback and eye mapping in both engines. Local Windows WebKit WAV decoding remained unavailable; physical iPhone checks remain pending.
 
 ## 0.3.0-candidate.2 (previous branch)
 

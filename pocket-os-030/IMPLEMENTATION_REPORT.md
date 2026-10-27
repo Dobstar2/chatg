@@ -43,7 +43,9 @@ On this Windows workstation the browser command used `POCKET_BROWSER_CHANNEL=mse
 
 Candidate unit tests: **68/68**. Shared tracking: **29/29**. All candidate JavaScript syntax checked. Browser flows and captured renders cover cold entry/tutorial, no camera request, search, persistence, 13-photo paging/cache bounds, window transforms/pinning, media errors, H.264 and WAV playback in Chromium, the spatial experiences, real stereo pixel mapping in both directions, viewport changes, pointer cancellation, module recovery and pending-motion fallback. Screenshot names and exact outcomes are in `evidence/browser-results.txt`, `evidence/recovery-results.txt` and the delivered QA folder.
 
-**Windows WebKit media limitation:** this engine advertises codecs but rejects the committed H.264 video and generated WAV. Its tests validate the visible error paths and static stereo fallback, not successful media playback. Safari on the actual iPhone remains an acceptance gate.
+**Final CI:** [GitHub Actions run 40577931956](https://github.com/Dobstar2/chatg/actions/runs/40577931956), source `8b2be58`, passed unit/syntax/shared tracking, full Chromium/WebKit UI, static build and dependency-recovery jobs. The audio test observes the browser’s actual `playing` event and uses an eight-second fixture so a short clip cannot end before an assertion. Linux CI verified H.264 and WAV playback in both engines; see `evidence/ci-browser-results.txt`.
+
+**Local Windows media limitation:** WebKit initially rejected the H.264/WAV fixtures. A later local run decoded H.264; WAV remained unavailable and its error path passed. These platform-specific results are retained without treating them as physical iPhone acceptance. Safari on the actual iPhone remains an acceptance gate.
 
 ## Build and deployment
 

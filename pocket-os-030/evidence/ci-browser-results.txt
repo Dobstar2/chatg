@@ -1,0 +1,34 @@
+2026-10-27T20:28:46.8612689Z chromium: cold start, tutorial, no camera request PASS
+2026-10-27T20:28:46.8613402Z chromium: native search → app → Home, Focus PASS
+2026-10-27T20:28:46.8613740Z chromium: settings persisted across reload PASS
+2026-10-27T20:28:46.8614135Z chromium: 13 photos, every page, aspect-preserving bounded decode PASS
+2026-10-27T20:28:46.8614542Z chromium: window scale, pin, snap affect app surface PASS
+2026-10-27T20:28:46.8614897Z chromium: H.264 video readiness/play events PASS
+2026-10-27T20:28:46.8615233Z chromium: WAV playback with real analyser PASS
+2026-10-27T20:28:46.8617298Z chromium: Planetarium focus, Hologram models, Mini Worlds expand/return, Portal destination, Arcade start/score PASS
+2026-10-27T20:28:46.8618157Z chromium: actual left/right Canvas pixel eye mapping PASS
+2026-10-27T20:28:46.8618693Z chromium: reversed right/left Canvas pixel mapping PASS
+2026-10-27T20:28:46.8619198Z chromium: pointer cancellation, rotation/viewport resize PASS
+2026-10-27T20:28:46.8620045Z chromium: stereo entry, missing motion samples fallback PASS
+2026-10-27T20:28:46.8620748Z chromium: failed local dependency → actionable reload → recovered PASS
+2026-10-27T20:28:46.8621273Z chromium: indefinitely pending motion permission does not block Home PASS (mocked API)
+2026-10-27T20:28:46.8621802Z chromium: no uncaught runtime errors, no startup external downloads PASS
+2026-10-27T20:28:46.8622203Z webkit: cold start, tutorial, no camera request PASS
+2026-10-27T20:28:46.8622779Z webkit: native search → app → Home, Focus PASS
+2026-10-27T20:28:46.8623096Z webkit: settings persisted across reload PASS
+2026-10-27T20:28:46.8623506Z webkit: 13 photos, every page, aspect-preserving bounded decode PASS
+2026-10-27T20:28:46.8623897Z webkit: window scale, pin, snap affect app surface PASS
+2026-10-27T20:28:46.8624222Z webkit: H.264 video readiness/play events PASS
+2026-10-27T20:28:46.8624556Z webkit: WAV playback with real analyser PASS
+2026-10-27T20:28:46.8625108Z webkit: Planetarium focus, Hologram models, Mini Worlds expand/return, Portal destination, Arcade start/score PASS
+2026-10-27T20:28:46.8625661Z webkit: actual left/right Canvas pixel eye mapping PASS
+2026-10-27T20:28:46.8626012Z webkit: reversed right/left Canvas pixel mapping PASS
+2026-10-27T20:28:46.8626389Z webkit: pointer cancellation, rotation/viewport resize PASS
+2026-10-27T20:28:46.8626768Z webkit: stereo entry, missing motion samples fallback PASS
+2026-10-27T20:28:46.8627236Z webkit: failed local dependency → actionable reload → recovered PASS
+2026-10-27T20:28:46.8627730Z webkit: indefinitely pending motion permission does not block Home PASS (mocked API)
+2026-10-27T20:28:46.8628238Z webkit: no uncaught runtime errors, no startup external downloads PASS
+2026-10-27T20:28:46.9408680Z Static candidate built at pocket-os-030/dist. Serve the whole dist directory.
+2026-10-27T20:28:49.2569919Z chromium: built artifact nested-path cold load, relative modules/assets, RC identity, no worker interception PASS
+2026-10-27T20:28:49.2570755Z chromium: deliberately blocked optional MediaPipe dependency releases mock camera and keeps navigation running PASS (mock stream)
+2026-10-27T20:28:49.2571500Z webkit: built artifact nested-path cold load, relative modules/assets, RC identity, no worker interception PASS

@@ -18,8 +18,8 @@ webkit: native search → app → Home, Focus PASS
 webkit: settings persisted across reload PASS
 webkit: 13 photos, every page, aspect-preserving bounded decode PASS
 webkit: window scale, pin, snap affect app surface PASS
-webkit: H.264 decode UNSUPPORTED in this Windows engine; static stereo fixture and error recovery PASS
-webkit: WAV decoder unavailable in this Windows engine; error state PASS
+webkit: H.264 video readiness/play events PASS
+webkit: WAV decoder unavailable in this engine; error state PASS
 webkit: Planetarium focus, Hologram models, Mini Worlds expand/return, Portal destination, Arcade start/score PASS
 webkit: actual left/right Canvas pixel eye mapping PASS
 webkit: reversed right/left Canvas pixel mapping PASS
