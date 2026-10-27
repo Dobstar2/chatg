@@ -153,7 +153,7 @@ async function run(name, type, options) {
       report.push(`${name}: H.264 video readiness/play events PASS`);
     } else
       report.push(
-        `${name}: H.264 decode UNSUPPORTED in this Windows engine; static stereo fixture and error recovery PASS`,
+        `${name}: H.264 decode UNSUPPORTED in this engine; static stereo fixture and error recovery PASS`,
       );
     await page.waitForTimeout(200);
     await shot('cinema');
@@ -169,7 +169,7 @@ async function run(name, type, options) {
     }
     await launchApp('Music', 'music');
     const rate = 22050,
-      samples = rate,
+      samples = rate * 8,
       buffer = Buffer.alloc(44 + samples * 2);
     buffer.write('RIFF');
     buffer.writeUInt32LE(36 + samples * 2, 4);
@@ -194,11 +194,26 @@ async function run(name, type, options) {
       ['ready', 'error'].includes(window.PocketVR.inspect().media.audioState),
     );
     if ((await inspect()).media.audioState === 'ready') {
+      await page.evaluate(() => {
+        window.qaAudioStarted = false;
+        document.getElementById('mediaAudio').addEventListener(
+          'playing',
+          () => {
+            window.qaAudioStarted = true;
+          },
+          { once: true },
+        );
+      });
       await click('music:play');
-      await page.waitForTimeout(150);
-      assert.equal((await inspect()).media.audioPlaying, true);
+      if (
+        (await page.locator('#trustedBar.visible').isVisible()) &&
+        /play audio/i.test(await page.locator('#trustedAction').textContent())
+      )
+        await page.click('#trustedAction');
+      await page.waitForFunction(() => window.qaAudioStarted, {}, { timeout: 5000 });
+      assert.ok(['playing', 'ended'].includes((await inspect()).media.audioState));
       report.push(`${name}: WAV playback with real analyser PASS`);
-    } else report.push(`${name}: WAV decoder unavailable in this Windows engine; error state PASS`);
+    } else report.push(`${name}: WAV decoder unavailable in this engine; error state PASS`);
     await shot('music');
     await launchApp('Planetarium', 'planetarium');
     await shot('planetarium');
