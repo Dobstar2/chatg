@@ -12,8 +12,8 @@ No applicable AGENTS.md found in the checkout or workspace ancestry.
 - [x] Persistent Library, functional windows, calibration and interactive tutorial.
 - [x] Event-driven media, bounded photo decode, audio and complete short game.
 - [x] Behavioural tests, Chromium/WebKit UI flows and screenshot inspection.
-- [ ] Reconcile build/docs, commit development branch and update draft PR.
-- [x] Verify preview infrastructure or provide reproducible artifact and blocker.
+- [x] Reconcile build/docs, commit development branch and update draft PR.
+- [x] Publish and verify an isolated owner-private HTTPS preview; provide reproducible static artifact.
 
 Production root, legacy entries and production deployment settings are protected.
 Physical iPhone acceptance is pending until tested by the device owner.

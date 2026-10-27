@@ -63,4 +63,4 @@ All boxes below remain unchecked. Desktop Chromium/WebKit and mocked API tests d
 - [ ] Fullscreen/orientation/wake-lock rejection does not block use. Exiting releases camera/audio/wake lock.
 - [ ] Run Cinema 10 minutes, tracking + a scene 10 minutes and repeated app/media replacement. Record comfort, memory pressure, frame rate and subjective heat honestly.
 
-No production-root promotion or 1.0 final label until these checks pass on the target iPhone/headset. There is currently no verified isolated HTTPS RC preview; the checked public candidate still serves C1.
+No production-root promotion or 1.0 final label until these checks pass on the target iPhone/headset. The owner-private RC preview is https://pocket-vr-rc1-20261027.angel-accoun-7378.chatgpt.site. It was checked in desktop Chromium/WebKit. The existing public GitHub Pages candidate still serves C1. All physical-device boxes remain pending.
