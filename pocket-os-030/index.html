@@ -1,79 +1,191 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#05070d" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Pocket VR" />
-  <link rel="manifest" href="./manifest.webmanifest?v=os030c1h1i1" />
-  <link rel="stylesheet" href="./styles.css?v=os030c1h1i1" />
-  <title>Pocket VR - POCKET OS 0.3 C1-H1-I1</title>
-</head>
-<body>
-  <video id="trackingVideo" playsinline muted aria-hidden="true"></video>
-  <video id="mediaVideo" playsinline preload="metadata" aria-hidden="true"></video>
-  <audio id="mediaAudio" preload="metadata" aria-hidden="true"></audio>
-
-  <main id="stereoRoot" aria-label="Pocket VR stereo spatial view">
-    <section class="eye" aria-label="Left eye view">
-      <canvas id="leftEyeCanvas"></canvas>
-    </section>
-    <div class="divider" aria-hidden="true"></div>
-    <section class="eye" aria-label="Right eye view">
-      <canvas id="rightEyeCanvas"></canvas>
-    </section>
-  </main>
-
-  <section id="startOverlay" class="start-overlay" aria-label="Pocket VR start">
-    <article class="launch-card">
-      <header class="launch-header">
-        <div>
-          <div class="eyebrow">POCKET VR</div>
-          <div id="buildLabel" class="build-label">POCKET OS 0.3 C1-H1-I1</div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#13272b" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Pocket VR" />
+    <link rel="manifest" href="./manifest.webmanifest?v=pocket-1rc1" />
+    <link rel="stylesheet" href="./styles-rc.css?v=pocket-1rc1" />
+    <title>Pocket VR 1.0 RC1</title>
+  </head>
+  <body data-mode="screen">
+    <video id="trackingVideo" playsinline muted aria-hidden="true"></video>
+    <video id="mediaVideo" playsinline preload="metadata" aria-hidden="true"></video>
+    <audio id="mediaAudio" preload="metadata" aria-hidden="true"></audio>
+    <main id="stereoRoot" aria-label="Pocket VR spatial view">
+      <section class="eye" aria-label="Left eye view">
+        <canvas
+          id="leftEyeCanvas"
+          aria-label="Spatial workspace. Drag empty space to look; tap a control to open it."
+        ></canvas>
+      </section>
+      <div class="divider" aria-hidden="true"></div>
+      <section class="eye" aria-label="Right eye view">
+        <canvas id="rightEyeCanvas"></canvas>
+      </section>
+    </main>
+    <section id="startOverlay" class="start-overlay" aria-label="Welcome to Pocket VR">
+      <article class="launch-card">
+        <div class="welcome-copy">
+          <header>
+            <span class="wordmark">◉ &nbsp; POCKET VR</span
+            ><span class="release">1.0 · release candidate</span>
+          </header>
+          <div class="eyebrow">A LITTLE SPACE, JUST FOR YOU</div>
+          <h1>Your world.<br />A little wider.</h1>
+          <p class="lead">
+            A quiet place for your films, photographs and favourite moments. On your phone, or
+            inside your headset.
+          </p>
+          <div class="welcome-actions">
+            <button id="screenButton" type="button" disabled>Try on screen</button
+            ><button id="enterButton" type="button" disabled class="secondary">
+              Enter headset mode
+            </button>
+          </div>
+          <p id="startStatus" class="small-note">
+            In a headset: look → highlight → pinch or tap. Head motion asks permission. Camera is
+            optional and starts only when you enable it.
+          </p>
+          <footer>
+            <span id="buildLabel">Pocket VR 1.0 RC1</span><span>Stay seated · use landscape</span>
+          </footer>
         </div>
-        <div class="status-pill"><span class="status-dot"></span>Icon Refresh</div>
-      </header>
-      <div class="launch-orb" aria-hidden="true"><span></span></div>
-      <h1>Look. Pinch. Done.</h1>
-      <p class="lead">Head aim is the primary pointer. Pinch either tracked hand to select. App tiles now use compact spatial pictograms instead of oversized letter badges.</p>
-      <div class="readiness-grid" aria-label="Control summary">
-        <div><strong>Head Aim</strong><span>Centre reticle targets controls</span></div>
-        <div><strong>Pinch</strong><span>Either hand confirms selection</span></div>
-        <div><strong>Touch</strong><span>Always-available fallback</span></div>
-      </div>
-      <button id="enterButton" class="enter-button" type="button">Enter Pocket VR</button>
-      <p id="startStatus" class="start-status">Safari continuous hand tracking remains enabled. App icons use lightweight vector-style canvas pictograms with no image downloads.</p>
-      <p class="small-note">For headset use, rotate to landscape before entering. iOS may show Camera and Motion permission prompts.</p>
-    </article>
-  </section>
-
-  <section id="trustedBar" class="trusted-bar" aria-live="polite" aria-label="iPhone system action">
-    <button id="trustedAction" type="button">Continue</button>
-    <button id="trustedCancel" class="secondary" type="button">Cancel</button>
-  </section>
-
-  <section id="browserBar" class="browser-bar" aria-label="Pocket Browser address bar">
-    <input id="browserInput" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" placeholder="Website address" />
-    <button id="browserOpen" type="button">Open in Safari</button>
-  </section>
-
-  <div id="touchHint" class="touch-hint" aria-hidden="true">LOOK + PINCH · TAP FALLBACK</div>
-
-  <input id="videoInput" class="hidden-input" type="file" accept="video/*" />
-  <input id="audioInput" class="hidden-input" type="file" accept="audio/*" />
-  <input id="imageInput" class="hidden-input" type="file" accept="image/*" multiple />
-
-  <noscript>Pocket VR requires JavaScript.</noscript>
-  <script type="importmap">
-    {
-      "imports": {
-        "../pocket-vr-next/tracking/hand-tracking-v020.js?v=os030": "../pocket-vr-next/tracking/hand-tracking-v020.js"
+        <div class="welcome-art" aria-hidden="true">
+          <svg viewBox="0 0 320 400" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="sky" x2="0" y2="1">
+                <stop stop-color="#31535f" />
+                <stop offset="1" stop-color="#abc0ad" />
+              </linearGradient>
+              <linearGradient id="floor" x2="0" y2="1">
+                <stop stop-color="#376164" />
+                <stop offset="1" stop-color="#142d34" />
+              </linearGradient>
+            </defs>
+            <path fill="url(#sky)" d="M0 0h320v400H0z" />
+            <circle cx="235" cy="100" r="38" fill="#e3d9b2" />
+            <path fill="#759c95" d="M0 210 70 130 155 230 250 158 320 220v180H0z" />
+            <path fill="#547d7d" d="M0 255 80 212 178 270 240 231 320 260v140H0z" />
+            <path fill="url(#floor)" d="M0 280h320v120H0z" />
+            <path
+              stroke="#aec4af"
+              stroke-opacity=".22"
+              d="M0 306h320M0 350h320M160 280 20 400M200 280 290 400"
+            />
+            <path fill="#17373e" d="M0 0h20v400H0zM300 0h20v400h-20zM0 0h320v24H0z" />
+            <rect
+              x="45"
+              y="138"
+              width="224"
+              height="112"
+              rx="16"
+              fill="#14343b"
+              fill-opacity=".88"
+              stroke="#b2d1bf"
+              stroke-opacity=".6"
+            />
+            <circle cx="91" cy="182" r="19" fill="#b8cfb2" />
+            <path d="m87 173 13 9-13 9z" fill="#2d5255" />
+            <path
+              stroke="#b8cfb2"
+              stroke-width="4"
+              stroke-linecap="round"
+              d="M130 171h98M130 186h69"
+            />
+            <path stroke="#9abbb1" stroke-width="2" d="M72 223h171" />
+            <rect x="90" y="270" width="139" height="31" rx="15" fill="#183b40" stroke="#8dada4" />
+            <g fill="#adc7af">
+              <circle cx="117" cy="285" r="5" />
+              <circle cx="159" cy="285" r="5" />
+              <circle cx="201" cy="285" r="5" />
+            </g>
+            <path fill="#adad8b" d="M258 327h29l-4 43h-21z" />
+            <path
+              stroke="#96b392"
+              stroke-width="6"
+              stroke-linecap="round"
+              d="m273 330-22-37m22 36 18-53m-18 47-3-60"
+            />
+          </svg>
+        </div>
+      </article>
+    </section>
+    <nav id="screenToolbar" aria-label="Workspace navigation">
+      <button id="homeButton">Home</button><button id="recenterButton">Recenter</button
+      ><button id="headsetButton">Headset</button><button id="exitButton">Exit</button>
+    </nav>
+    <button id="skipTutorial" hidden>Skip tutorial</button>
+    <div id="rotateHint">Turn your phone sideways for headset mode. Touch remains available.</div>
+    <section id="trustedBar" class="action-bar" aria-live="polite" aria-label="System action">
+      <button id="trustedAction">Continue</button
+      ><button id="trustedCancel" class="secondary">Cancel</button>
+    </section>
+    <section id="browserBar" class="action-bar" aria-label="Website address">
+      <input
+        id="browserInput"
+        aria-label="Website address"
+        inputmode="url"
+        autocomplete="url"
+        autocapitalize="none"
+        spellcheck="false"
+        placeholder="example.com"
+      /><button id="browserOpen">Open website</button>
+    </section>
+    <section id="searchBar" class="action-bar" aria-label="Search your Library">
+      <input
+        id="searchInput"
+        aria-label="Search apps"
+        type="search"
+        enterkeyhint="search"
+        autocomplete="off"
+        autocapitalize="none"
+        spellcheck="false"
+        placeholder="Search apps"
+      /><button id="searchApply">Search</button
+      ><button id="searchClear" class="secondary">Clear</button>
+    </section>
+    <section id="recovery" hidden role="alert">
+      <h2>Let's bring your space back.</h2>
+      <p>
+        The display could not recover. Your local files are safe. Return to Welcome and try again.
+      </p>
+      <button id="retryButton">Return to Welcome</button
+      ><button onclick="location.reload()" class="secondary">Reload</button>
+    </section>
+    <div id="touchHint" hidden></div>
+    <input
+      id="videoInput"
+      class="hidden-input"
+      type="file"
+      accept="video/*"
+      aria-label="Choose local video"
+    />
+    <input
+      id="audioInput"
+      class="hidden-input"
+      type="file"
+      accept="audio/*"
+      aria-label="Choose local audio"
+    />
+    <input
+      id="imageInput"
+      class="hidden-input"
+      type="file"
+      accept="image/*"
+      multiple
+      aria-label="Choose local photos"
+    />
+    <noscript>Pocket VR needs JavaScript. Enable it in Safari and reload.</noscript>
+    <script type="importmap">
+      {
+        "imports": {
+          "../pocket-vr-next/tracking/hand-tracking-v020.js?v=os030c2": "../pocket-vr-next/tracking/hand-tracking-v020.js"
+        }
       }
-    }
-  </script>
-  <!-- Compatibility marker for the original Pages-safe app entry test: src="./app.js -->
-  <script type="module" src="./app-entry-icons-v1.js?v=os030c1h1i1"></script>
-</body>
+    </script>
+    <script type="module" src="./app.js?v=pocket-1rc1"></script>
+  </body>
 </html>

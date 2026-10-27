@@ -27,41 +27,53 @@ export class PinchLatch {
   }
 
   update(hands, now) {
-    const starts = [];
-    let anyHeld = false;
-    let release = false;
-    for (const side of ['left', 'right']) {
-      const hand = hands?.[side];
-      const phase = hand?.gesture?.pinchPhase || 'open';
-      const serial = hand?.gesture?.pinchSerial ?? -1;
-      if (phase === 'start' && serial !== this.lastSerialBySide[side]) {
-        this.lastSerialBySide[side] = serial;
-        starts.push(side);
-      }
-      if (phase === 'held' || phase === 'start') anyHeld = true;
-      if (phase === 'release' && serial !== this.lastSerialBySide[side]) {
-        this.lastSerialBySide[side] = serial;
-        release = true;
-      }
-    }
-
+    this.blocked ||= new Set();
+    const valid = (side) => {
+      const h = hands?.[side];
+      return (
+        h &&
+        h.tracked !== false &&
+        h.interactionSafe !== false &&
+        (h.confidence === undefined || h.confidence >= 0.45)
+      );
+    };
+    const phase = (side) => hands?.[side]?.gesture?.pinchPhase || 'open';
     const events = [];
-    if (starts.length && !this.active) {
-      this.active = true;
-      this.startedAt = now;
-      this.holdSent = false;
-      events.push({ type: 'start', side: starts[0] });
+    for (const side of ['left', 'right']) {
+      if (!valid(side)) this.blocked.add(side);
+      else if (phase(side) === 'open' || phase(side) === 'release') this.blocked.delete(side);
     }
-
-    if (this.active && anyHeld && !this.holdSent && now - this.startedAt >= this.holdMs) {
-      this.holdSent = true;
-      events.push({ type: 'hold', side: starts[0] || null });
+    if (this.active) {
+      if (!valid(this.owner) || !['held', 'start'].includes(phase(this.owner))) {
+        events.push({ type: 'release', side: this.owner });
+        this.active = false;
+        this.owner = null;
+        this.holdSent = false;
+      } else if (!this.holdSent && now - this.startedAt >= this.holdMs) {
+        this.holdSent = true;
+        events.push({ type: 'hold', side: this.owner });
+      }
+      // A second hand cannot inherit the first hand's hold or release it.
+      for (const side of ['left', 'right'])
+        if (phase(side) === 'start') this.lastSerialBySide[side] = hands[side].gesture.pinchSerial;
+      return events;
     }
-
-    if (this.active && (!anyHeld || release)) {
-      this.active = false;
-      this.holdSent = false;
-      events.push({ type: 'release', side: null });
+    for (const side of ['left', 'right']) {
+      const serial = hands?.[side]?.gesture?.pinchSerial ?? -1;
+      if (
+        valid(side) &&
+        !this.blocked.has(side) &&
+        phase(side) === 'start' &&
+        serial !== this.lastSerialBySide[side]
+      ) {
+        this.lastSerialBySide[side] = serial;
+        this.active = true;
+        this.owner = side;
+        this.startedAt = now;
+        this.holdSent = false;
+        events.push({ type: 'start', side });
+        break;
+      }
     }
     return events;
   }
@@ -75,6 +87,7 @@ export class InputManager extends EventTarget {
     this.selectSource = 'pinch';
     this.aimSource = 'head';
     this.pinchLatch = new PinchLatch({ holdMs });
+    this.pinchTarget = null;
     this.dwellEnabled = false;
     this.dwellMs = dwellMs;
     this.dwellTargetId = null;
@@ -114,13 +127,21 @@ export class InputManager extends EventTarget {
     const events = this.pinchLatch.update(hands, now);
     for (const event of events) {
       if (event.type === 'start') {
+        // Capture the initial target so a held Move/Resize survives a gaze shift.
+        this.pinchTarget = this.aim?.target || null;
         if (this.selectionMethod === 'pinch' || this.selectionMethod === 'experimental-hands') {
           this._select('pinch', event.side, now);
         }
       } else if (event.type === 'hold') {
-        emit(this, INPUT_ACTIONS.HOLD, { target: this.aim?.target || null, side: event.side, source: 'pinch', now });
+        emit(this, INPUT_ACTIONS.HOLD, {
+          target: this.pinchTarget,
+          side: event.side,
+          source: 'pinch',
+          now,
+        });
       } else if (event.type === 'release') {
-        emit(this, INPUT_ACTIONS.RELEASE, { target: this.aim?.target || null, source: 'pinch', now });
+        emit(this, INPUT_ACTIONS.RELEASE, { target: this.pinchTarget, source: 'pinch', now });
+        this.pinchTarget = null;
       }
     }
   }
@@ -149,11 +170,22 @@ export class InputManager extends EventTarget {
     if (code === 'KeyM') emit(this, INPUT_ACTIONS.MENU, { source: 'keyboard', now });
   }
 
+  cancel() {
+    if (this.pinchLatch.active)
+      emit(this, INPUT_ACTIONS.RELEASE, { target: this.pinchTarget, source: 'cancel' });
+    this.pinchLatch.active = false;
+    this.pinchLatch.blocked = new Set(['left', 'right']);
+    this.pinchTarget = null;
+    this.setAim(null);
+    this.keys.clear();
+  }
+
   keyboardUp(code) {
     this.keys.delete(code);
   }
 
   _select(source, side, now) {
+    if (!this.aim?.target || this.aim.target.disabled || this.aim.target.visible === false) return;
     if (now - this.lastSelectAt < 90) return;
     this.lastSelectAt = now;
     emit(this, INPUT_ACTIONS.SELECT, {

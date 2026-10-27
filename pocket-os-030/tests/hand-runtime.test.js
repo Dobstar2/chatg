@@ -12,10 +12,10 @@ function read(relative) {
 }
 
 test('Pocket OS maps the queried hand tracker to the canonical patched module', () => {
-  const app = read('app.js');
+  const app = read('app-c2.js');
   const html = read('index.html');
-  assert.ok(app.includes("hand-tracking-v020.js?v=os030"), 'candidate still imports the versioned hand tracker');
-  assert.ok(html.includes('"../pocket-vr-next/tracking/hand-tracking-v020.js?v=os030": "../pocket-vr-next/tracking/hand-tracking-v020.js"'));
+  assert.ok(app.includes("hand-tracking-v020.js?v=os030c2"), 'candidate still imports the versioned hand tracker');
+  assert.ok(html.includes('"../pocket-vr-next/tracking/hand-tracking-v020.js?v=os030c2": "../pocket-vr-next/tracking/hand-tracking-v020.js"'));
 });
 
 test('Safari continuous and MediaPipe runtime patches target the canonical hand tracker', () => {
@@ -31,7 +31,7 @@ test('Safari continuous and MediaPipe runtime patches target the canonical hand 
 test('hand fix identity survives visual release suffixes and no service worker is registered', () => {
   const html = read('index.html');
   const version = read('core/version.js');
-  assert.ok(html.includes('POCKET OS 0.3 C1-H1'));
-  assert.match(version, /BUILD_SHORT\s*=\s*'POCKET OS 0\.3 C1-H1(?:-[A-Z0-9]+)*'/);
+  assert.ok(html.includes('Pocket VR 1.0 RC1'));
+  assert.match(version, /BUILD_SHORT\s*=\s*'Pocket VR 1\.0 RC1'/);
   assert.equal(/serviceWorker\s*\.\s*register|navigator\.serviceWorker\.register/.test(html), false);
 });

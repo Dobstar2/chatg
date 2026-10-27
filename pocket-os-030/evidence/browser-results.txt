@@ -1,0 +1,30 @@
+chromium: cold start, tutorial, no camera request PASS
+chromium: native search → app → Home, Focus PASS
+chromium: settings persisted across reload PASS
+chromium: 13 photos, every page, aspect-preserving bounded decode PASS
+chromium: window scale, pin, snap affect app surface PASS
+chromium: H.264 video readiness/play events PASS
+chromium: WAV playback with real analyser PASS
+chromium: Planetarium focus, Hologram models, Mini Worlds expand/return, Portal destination, Arcade start/score PASS
+chromium: actual left/right Canvas pixel eye mapping PASS
+chromium: reversed right/left Canvas pixel mapping PASS
+chromium: pointer cancellation, rotation/viewport resize PASS
+chromium: stereo entry, missing motion samples fallback PASS
+chromium: failed local dependency → actionable reload → recovered PASS
+chromium: indefinitely pending motion permission does not block Home PASS (mocked API)
+chromium: no uncaught runtime errors, no startup external downloads PASS
+webkit: cold start, tutorial, no camera request PASS
+webkit: native search → app → Home, Focus PASS
+webkit: settings persisted across reload PASS
+webkit: 13 photos, every page, aspect-preserving bounded decode PASS
+webkit: window scale, pin, snap affect app surface PASS
+webkit: H.264 video readiness/play events PASS
+webkit: WAV decoder unavailable in this engine; error state PASS
+webkit: Planetarium focus, Hologram models, Mini Worlds expand/return, Portal destination, Arcade start/score PASS
+webkit: actual left/right Canvas pixel eye mapping PASS
+webkit: reversed right/left Canvas pixel mapping PASS
+webkit: pointer cancellation, rotation/viewport resize PASS
+webkit: stereo entry, missing motion samples fallback PASS
+webkit: failed local dependency → actionable reload → recovered PASS
+webkit: indefinitely pending motion permission does not block Home PASS (mocked API)
+webkit: no uncaught runtime errors, no startup external downloads PASS

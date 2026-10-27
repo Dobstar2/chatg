@@ -1,16 +1,19 @@
-name: Pocket OS 0.3 Candidate
+name: Pocket VR Release Candidate
 
 on:
   push:
     branches:
       - main
       - agent/pocket-spatial-os-030
+      - agent/pocket-spatial-os-030-c2
     paths:
       - 'pocket-os-030/**'
+      - 'pocket-vr-next/tracking/**'
       - '.github/workflows/pocket-os-030.yml'
   pull_request:
     paths:
       - 'pocket-os-030/**'
+      - 'pocket-vr-next/tracking/**'
       - '.github/workflows/pocket-os-030.yml'
 
 permissions:
@@ -28,9 +31,44 @@ jobs:
       - name: Syntax check
         working-directory: pocket-os-030
         run: npm run check
+      - name: Shared tracking regressions
+        run: node --test pocket-vr-next/tests/*.test.*
       - name: Regression tests
         working-directory: pocket-os-030
         run: npm test
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --global pnpm@11.25.0
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+        working-directory: pocket-os-030
+      - run: pnpm exec playwright install --with-deps chromium webkit
+        working-directory: pocket-os-030
+      - name: Exercise real UI in both engines
+        working-directory: pocket-os-030
+        run: |
+          node scripts/serve.mjs > server.log 2>&1 &
+          node scripts/browser-qa.cjs
+      - name: Build isolated static artifact
+        working-directory: pocket-os-030
+        run: node scripts/build.mjs
+      - name: Check built paths and optional dependency recovery
+        working-directory: pocket-os-030
+        run: node scripts/recovery-qa.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pocket-vr-rc1-evidence-and-static-build
+          path: |
+            pocket-os-030/test-results/
+            pocket-os-030/dist/
+            pocket-os-030/server.log
 
   pages-smoke:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -38,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Wait for GitHub Pages icon candidate and verify protected root
+      - name: Wait for GitHub Pages RC1 and verify protected root
         shell: bash
         run: |
           set -euo pipefail
@@ -47,12 +85,12 @@ jobs:
           for attempt in $(seq 1 48); do
             candidate_html=$(curl -fsSL --max-time 15 "${candidate}?smoke=${GITHUB_SHA}" || true)
             root_html=$(curl -fsSL --max-time 15 "${root}?smoke=${GITHUB_SHA}" || true)
-            if grep -q 'POCKET OS 0.3 C1-H1-I1' <<<"${candidate_html}" && grep -q 'app-entry-icons-v1.js' <<<"${candidate_html}" && grep -q 'hand-tracking-v020.js?v=os030' <<<"${candidate_html}" && grep -q 'SAFARI TIMER' <<<"${root_html}"; then
-              echo 'Pocket OS pictogram candidate is live, hand-runtime mapping is present, and protected root is unchanged.'
+            if grep -q 'Pocket VR 1.0 RC1' <<<"${candidate_html}" && grep -q 'src="./app.js?v=pocket-1rc1"' <<<"${candidate_html}" && grep -q 'hand-tracking-v020.js?v=os030c2' <<<"${candidate_html}" && grep -q 'SAFARI TIMER' <<<"${root_html}"; then
+              echo 'Pocket VR RC1 is live, hand-runtime mapping is present, and protected root is unchanged.'
               exit 0
             fi
             echo "Pages not ready yet (attempt ${attempt}/48)."
             sleep 10
           done
-          echo 'Timed out waiting for expected GitHub Pages icon candidate.' >&2
+          echo 'Timed out waiting for expected GitHub Pages RC1 candidate.' >&2
           exit 1

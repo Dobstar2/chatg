@@ -1,75 +1,21 @@
-# Pocket VR Spatial OS Changelog
+# Pocket VR changelog
+
+## 1.0.0-rc.1
+
+- Added immediate camera-free screen/headset startup, bounded optional permissions, interactive onboarding, alignment and actionable recovery.
+- Replaced the renderer patch chain with a single Canvas renderer/layout model, original pictograms and composed Studio/Observatory/Ocean environments.
+- Fixed stale targeting, pinch ownership/safety, tracking-loss rearming, touch cancellation, native typing and dwell cancellation.
+- Added full paginated Library search/categories, persisted favourites/recency, functional window transforms and labelled Switcher previews.
+- Completed event-driven Cinema controls/errors, real stereo crop with original fixtures, bounded Gallery decode/paging, real Music analyser, Focus lifecycle and a timed Arcade round.
+- Improved illustrative Planetarium, Portal destinations, Hologram models and Mini Worlds; kept Labs explicitly experimental.
+- Added resource/lifecycle cancellation, private/corrupt storage tolerance, pinned browser tooling, behavioural tests, browser QA/screenshots and reproducible static artifacts.
+- Corrected the shared adaptive filter's sustained-movement response and ignored invalid orientation samples.
+- Kept production entries and hosting settings unchanged. Physical acceptance and an isolated HTTPS deployment remain pending. Linux CI verified H.264/WAV playback and eye mapping in both engines. Local Windows WebKit WAV decoding remained unavailable; physical iPhone checks remain pending.
+
+## 0.3.0-candidate.2 (previous branch)
+
+Persistent control preferences, native Library search, environments/focus, window pin/snap/resize and Gallery/Cinema controls. Its report and acceptance file still described C1; this release reconciles those documents against implementation and measured evidence.
 
 ## 0.3.0-candidate.1
 
-### Interaction
-
-- Promoted head/view aim to the primary navigation pointer.
-- Added smart angular target assistance and target stickiness.
-- Added unified InputManager actions.
-- Added either-hand pinch confirmation.
-- Added pinch hold/release states.
-- Added touch-to-confirm fallback.
-- Added optional dwell selection.
-- Added keyboard and browser Gamepad API development/control paths.
-- Kept precise hand position out of primary UI targeting.
-
-### System
-
-- Added Pocket Home.
-- Added compact Dock.
-- Added App Library with featured/recent/favourite concepts.
-- Added Quick Settings.
-- Added App Switcher.
-- Added bounded spatial windows and gaze/head-driven move mode.
-- Added notifications.
-- Added compact status UI and premium centre reticle states.
-- Added environment selection.
-- Added system audio feedback.
-- Added PerformanceManager with adaptive quality reduction.
-- Added one candidate CameraCoordinator.
-- Added capability checking.
-
-### Apps
-
-- Added Planetarium.
-- Added Pocket Cinema.
-- Added Portal.
-- Added Hologram Lab.
-- Added Target Rush Arcade.
-- Added Music Room.
-- Added Passthrough / Quick Peek foundations.
-- Added Mini Worlds.
-- Added Gallery.
-- Added Browser launcher.
-- Added Clock.
-- Added Settings.
-- Added Tracking Lab.
-- Added Labs.
-- Added System Info.
-
-### Cinema
-
-- Added normal 2D source rendering.
-- Added real SBS-LR source-half-to-eye mapping.
-- Added SBS-RL eye reversal.
-- Added play/pause.
-- Added seek.
-- Added volume cycling.
-- Added screen size and distance.
-- Added lightweight curved-screen mode.
-
-### Reliability
-
-- Candidate is isolated under `pocket-os-030/`.
-- Production root remains unchanged during development.
-- Candidate does not register a service worker.
-- Added GitHub Pages-safe relative paths.
-- Added authoritative build constant and matching launch label.
-- Added automated syntax and regression CI.
-
-### Validation
-
-- GitHub Actions PR CI: syntax check passed.
-- GitHub Actions PR CI: regression suite passed.
-- Physical iPhone acceptance remains required before production-root promotion.
+Initial head-aim-first candidate, isolated from the legacy root, with optional hand confirmation, Canvas stereo shell, local media and illustrative spatial experiences. No candidate service worker.

@@ -1,0 +1,3 @@
+chromium: built artifact nested-path cold load, relative modules/assets, RC identity, no worker interception PASS
+chromium: deliberately blocked optional MediaPipe dependency releases mock camera and keeps navigation running PASS (mock stream)
+webkit: built artifact nested-path cold load, relative modules/assets, RC identity, no worker interception PASS

@@ -1,0 +1,66 @@
+[
+  {
+    "engine": "chromium",
+    "url": "https://pocket-vr-rc1-20261027.angel-accoun-7378.chatgpt.site/pocket-os-030/",
+    "status": 200,
+    "version": "pocket-vr-1.0.0-rc.1",
+    "modules": 34,
+    "assets": [
+      {
+        "path": "/build.json",
+        "status": 200,
+        "mime": "application/json"
+      },
+      {
+        "path": "/pocket-os-030/assets/stereo-test.svg",
+        "status": 200,
+        "mime": "image/svg+xml"
+      },
+      {
+        "path": "/pocket-os-030/assets/stereo-test.mp4",
+        "status": 200,
+        "mime": "video/mp4"
+      },
+      {
+        "path": "/pocket-vr-next/tracking/hand-worker-v020.js",
+        "status": 200,
+        "mime": "text/javascript"
+      }
+    ],
+    "errors": [],
+    "bad": [],
+    "serviceWorker": false
+  },
+  {
+    "engine": "webkit",
+    "url": "https://pocket-vr-rc1-20261027.angel-accoun-7378.chatgpt.site/pocket-os-030/",
+    "status": 200,
+    "version": "pocket-vr-1.0.0-rc.1",
+    "modules": 34,
+    "assets": [
+      {
+        "path": "/build.json",
+        "status": 200,
+        "mime": "application/json"
+      },
+      {
+        "path": "/pocket-os-030/assets/stereo-test.svg",
+        "status": 200,
+        "mime": "image/svg+xml"
+      },
+      {
+        "path": "/pocket-os-030/assets/stereo-test.mp4",
+        "status": 200,
+        "mime": "video/mp4"
+      },
+      {
+        "path": "/pocket-vr-next/tracking/hand-worker-v020.js",
+        "status": 200,
+        "mime": "text/javascript"
+      }
+    ],
+    "errors": [],
+    "bad": [],
+    "serviceWorker": false
+  }
+]

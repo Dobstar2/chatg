@@ -34,6 +34,7 @@ export class WindowManager {
   }
 
   close(id) {
+    if (this.manipulation?.id === id) this.endManipulation();
     this.windows.delete(id);
     if (this.focusedId === id) this.focusedId = [...this.windows.keys()].at(-1) || null;
   }
@@ -44,37 +45,60 @@ export class WindowManager {
     return true;
   }
 
+  togglePin(id) {
+    const window = this.windows.get(id);
+    if (!window) return false;
+    window.pinned = !window.pinned;
+    if (window.pinned && this.manipulation?.type === 'move' && this.manipulation.id === id) {
+      this.endManipulation();
+    }
+    return window.pinned;
+  }
+
   snap(id, slot) {
     const window = this.windows.get(id);
     const position = SNAP[slot];
-    if (!window || !position) return false;
+    if (!window || !position || window.pinned) return false;
     window.position = { ...position };
     return true;
   }
 
   beginMove(id) {
-    if (!this.windows.has(id)) return false;
+    const window = this.windows.get(id);
+    if (!window || window.pinned) return false;
     this.manipulation = { type: 'move', id };
     return true;
   }
 
-  beginResize(id) {
-    if (!this.windows.has(id)) return false;
-    this.manipulation = { type: 'resize', id };
+  beginResize(id, aimDirection = { y: 0 }) {
+    const window = this.windows.get(id);
+    if (!window || window.pinned) return false;
+    this.manipulation = {
+      type: 'resize',
+      id,
+      startScale: window.scale,
+      startAimY: Number(aimDirection?.y) || 0,
+    };
     return true;
   }
 
-  updateManipulation({ aimDirection, resizeDelta = 0 } = {}) {
+  updateManipulation({ aimDirection, resizeDelta = null } = {}) {
     if (!this.manipulation) return false;
     const window = this.windows.get(this.manipulation.id);
     if (!window) return false;
+    if (this.manipulation.type === 'move' && window.pinned) return false;
     if (this.manipulation.type === 'move' && aimDirection) {
       const depth = clamp(-window.position.z, 0.85, 2.4);
       const denom = Math.max(0.2, -aimDirection.z);
-      window.position.x = clamp(aimDirection.x / denom * depth, -1.2, 1.2);
-      window.position.y = clamp(aimDirection.y / denom * depth, -0.65, 0.8);
+      window.position.x = clamp((aimDirection.x / denom) * depth, -1.2, 1.2);
+      window.position.y = clamp((aimDirection.y / denom) * depth, -0.65, 0.8);
     } else if (this.manipulation.type === 'resize') {
-      window.scale = clamp(window.scale + resizeDelta, 0.65, 1.6);
+      if (aimDirection) {
+        const deltaY = (Number(aimDirection.y) || 0) - this.manipulation.startAimY;
+        window.scale = clamp(this.manipulation.startScale + deltaY * 1.8, 0.65, 1.6);
+      } else if (Number.isFinite(resizeDelta)) {
+        window.scale = clamp(window.scale + resizeDelta, 0.65, 1.6);
+      }
     }
     return true;
   }
